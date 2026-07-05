@@ -1,46 +1,81 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CycleHeatmap from "@/components/tracking/CycleHeatmap";
 import DayDetail from "@/components/tracking/DayDetail";
+import { loadAllEntries, loadEntryByDate } from "@/lib/data";
+import type { DailyEntry } from "@/lib/types";
 
 // ──────────────────────────────────────────────
 // Cycle Tracker View (#12 from 06_PAGES_AND_FLOWS.md)
 //
 // Houses the creative heatmap view (MVP) with day detail panel.
-// Standard month-grid calendar can exist as secondary toggle view
-// but isn't the default per spec.
+// Now reads real entry data from IndexedDB via data service.
 // ──────────────────────────────────────────────
 
-// Demo data — will be replaced by real data from IndexedDB
-const DEMO_DATA = generateDemoData();
-
-function generateDemoData() {
-  const data = [];
-  const today = new Date();
-  for (let i = 0; i < 180; i++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    const dateStr = date.toISOString().split("T")[0];
-
-    // Simulate cycle: period every ~28 days, 5 days long
-    const dayInCycle = i % 28;
-    const isPeriod = dayInCycle < 5;
-    const flowIntensities = ["heavy", "heavy", "medium", "light", "spotting"] as const;
-
-    data.push({
-      date: dateStr,
-      periodFlag: isPeriod,
-      flowIntensity: isPeriod ? flowIntensities[dayInCycle] : undefined,
-      symptomCount: isPeriod ? Math.floor(Math.random() * 4) + 1 : Math.random() > 0.6 ? Math.floor(Math.random() * 3) : 0,
-      mood: Math.floor(Math.random() * 5) + 1,
-    });
-  }
-  return data;
+interface HeatmapDayData {
+  date: string;
+  periodFlag: boolean;
+  flowIntensity?: "spotting" | "light" | "medium" | "heavy";
+  symptomCount: number;
+  mood?: number;
 }
 
 export default function CycleViewPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<DailyEntry | null>(null);
+  const [heatmapData, setHeatmapData] = useState<HeatmapDayData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load all entries and transform for heatmap
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const entries = await loadAllEntries();
+
+        // Transform DailyEntry[] → HeatmapDayData[]
+        const data: HeatmapDayData[] = entries.map((entry) => ({
+          date: entry.date,
+          periodFlag: entry.periodFlag,
+          flowIntensity: entry.flowIntensity,
+          symptomCount: entry.symptoms.length,
+          mood: entry.mood,
+        }));
+
+        setHeatmapData(data);
+      } catch (err) {
+        console.error("Failed to load entries for heatmap:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  // Load full entry detail when a day is clicked
+  const handleDayClick = async (date: string) => {
+    setSelectedDate(date);
+    try {
+      const entry = await loadEntryByDate(date);
+      setSelectedEntry(entry ?? null);
+    } catch (err) {
+      console.error("Failed to load day detail:", err);
+      setSelectedEntry(null);
+    }
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedDate(null);
+    setSelectedEntry(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-6 flex justify-center">
+        <div className="w-8 h-8 border-2 border-signal border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
@@ -56,18 +91,26 @@ export default function CycleViewPage() {
         </div>
       </div>
 
-      <CycleHeatmap
-        data={DEMO_DATA}
-        months={6}
-        onDayClick={(date) => setSelectedDate(date)}
-      />
+      {heatmapData.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-fog text-sm">
+            No entries yet. Start logging daily to see your cycle patterns here.
+          </p>
+        </div>
+      ) : (
+        <CycleHeatmap
+          data={heatmapData}
+          months={6}
+          onDayClick={handleDayClick}
+        />
+      )}
 
       {/* Day detail slide-up */}
       <DayDetail
         isOpen={selectedDate !== null}
-        onClose={() => setSelectedDate(null)}
+        onClose={handleCloseDetail}
         date={selectedDate || ""}
-        entry={null} // TODO: load real entry from IndexedDB
+        entry={selectedEntry}
       />
     </div>
   );

@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth-context";
+import { saveCycle, saveMeta, loadMeta } from "@/lib/data";
+import { generateId } from "@/lib/utils";
+import type { Cycle } from "@/lib/types";
 
 // ──────────────────────────────────────────────
 // Onboarding Flow (Pages 6–9 from 06_PAGES_AND_FLOWS.md)
@@ -11,12 +15,16 @@ import { useRouter } from "next/navigation";
 // 2. Cycle basics (last period start, typical length, "irregular/not sure")
 // 3. Sync choice (local-only vs cloud sync)
 // 4. Complete / first insight (show first phase-ring prediction)
+//
+// Wiring: saves first cycle record + app meta to IndexedDB via data service,
+// then redirects to /dashboard.
 // ──────────────────────────────────────────────
 
 type OnboardingStep = "privacy" | "cycle" | "sync" | "complete";
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { isAuthenticated, refreshMeta } = useAuth();
   const [step, setStep] = useState<OnboardingStep>("privacy");
   const [cycleData, setCycleData] = useState({
     lastPeriodStart: "",
@@ -24,10 +32,59 @@ export default function OnboardingPage() {
     isIrregular: false,
   });
   const [syncChoice, setSyncChoice] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleComplete = () => {
-    // TODO: save onboarding data to IndexedDB meta + first cycle
-    router.push("/dashboard");
+  const handleComplete = async () => {
+    if (!isAuthenticated) {
+      setError("Session expired. Please sign up again.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+
+    try {
+      // 1. Create first cycle record from entered data
+      const firstCycle: Cycle = {
+        cycleId: generateId(),
+        startDate: cycleData.lastPeriodStart,
+        notes: cycleData.isIrregular ? "Irregular cycle reported during onboarding" : undefined,
+      };
+      await saveCycle(firstCycle);
+
+      // 2. Update app meta with onboarding complete + sync choice
+      const existingMeta = await loadMeta();
+      if (existingMeta) {
+        await saveMeta({
+          ...existingMeta,
+          onboarding_done: true,
+          sync_enabled: syncChoice,
+        });
+      }
+
+      // 3. Refresh auth context so it knows onboarding is done
+      await refreshMeta();
+
+      // 4. Navigate to dashboard
+      router.push("/dashboard");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to save. Please try again."
+      );
+      setSaving(false);
+    }
+  };
+
+  // Calculate what day/phase to show in the completion preview
+  const getPreviewDay = (): number => {
+    if (!cycleData.lastPeriodStart) return 1;
+    const start = new Date(cycleData.lastPeriodStart);
+    const today = new Date();
+    const diffMs = today.getTime() - start.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const cycleLen = cycleData.typicalLength ? parseInt(cycleData.typicalLength) : 28;
+    return (diffDays % cycleLen) + 1;
   };
 
   return (
@@ -230,11 +287,13 @@ export default function OnboardingPage() {
               You&apos;re all set
             </h1>
 
-            {/* Phase ring preview — will use real data once connected */}
+            {/* Phase ring preview — shows real calculated day */}
             <div className="flex justify-center py-4">
               <div className="w-40 h-40 rounded-full border-4 border-signal flex items-center justify-center">
                 <div className="text-center">
-                  <span className="text-2xl font-bold font-mono text-paper">1</span>
+                  <span className="text-2xl font-bold font-mono text-paper">
+                    {getPreviewDay()}
+                  </span>
                   <br />
                   <span className="text-xs text-fog uppercase tracking-widest">Day</span>
                 </div>
@@ -246,11 +305,14 @@ export default function OnboardingPage() {
               more accurate.
             </p>
 
+            {error && <p className="text-error text-sm">{error}</p>}
+
             <button
               onClick={handleComplete}
-              className="w-full py-3 rounded-md bg-signal text-paper font-medium hover:bg-signal-deep transition-colors"
+              disabled={saving}
+              className="w-full py-3 rounded-md bg-signal text-paper font-medium hover:bg-signal-deep transition-colors disabled:opacity-40"
             >
-              Start tracking
+              {saving ? "Setting up..." : "Start tracking"}
             </button>
           </div>
         )}

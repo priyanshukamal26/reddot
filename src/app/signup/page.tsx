@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/context/auth-context";
 
 // ──────────────────────────────────────────────
 // Sign Up Page (#4 from 06_PAGES_AND_FLOWS.md)
@@ -9,9 +11,15 @@ import Link from "next/link";
 // Email + password + the "your password is also your encryption key"
 // explainer. This explainer is short and can't be skipped — it's
 // critical for user understanding per 02_FEATURE_SPEC.md (A1).
+//
+// Wiring: calls auth context signup() → derives encryption key from
+// password via PBKDF2 → saves salt to IndexedDB → redirects to
+// /onboarding for cycle data collection.
 // ──────────────────────────────────────────────
 
 export default function SignupPage() {
+  const router = useRouter();
+  const { signup } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -38,12 +46,18 @@ export default function SignupPage() {
 
     setLoading(true);
 
-    // TODO: integrate with Auth.js, create user in Neon,
-    // generate salt, derive encryption key, redirect to onboarding
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-
-    window.location.href = "/onboarding";
+    try {
+      // Derive encryption key from password, save salt to IndexedDB
+      await signup(password);
+      // Note: email is collected for future Neon/Auth.js integration
+      // but not used in local-only mode yet
+      router.push("/onboarding");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Something went wrong. Please try again."
+      );
+      setLoading(false);
+    }
   };
 
   return (

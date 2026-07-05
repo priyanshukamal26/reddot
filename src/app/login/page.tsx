@@ -1,31 +1,53 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useAuth } from "@/context/auth-context";
 
 // ──────────────────────────────────────────────
 // Login Page (#3 from 06_PAGES_AND_FLOWS.md)
-// Email + password
+//
+// Email + password. Loads salt from IndexedDB, derives encryption key,
+// redirects to dashboard. Shows error if no account found or wrong password.
 // ──────────────────────────────────────────────
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { login, isAuthenticated, onboardingDone } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // If already authenticated, redirect immediately
+  if (isAuthenticated) {
+    if (onboardingDone) {
+      router.replace("/dashboard");
+    } else {
+      router.replace("/onboarding");
+    }
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // TODO: integrate with Auth.js credentials provider
-    // For now, simulate
-    await new Promise((r) => setTimeout(r, 1000));
-    setLoading(false);
-
-    // TODO: derive encryption key from password, redirect to dashboard
-    window.location.href = "/dashboard";
+    try {
+      await login(password);
+      // Login succeeded — redirect based on onboarding status
+      // Note: the refreshMeta in login updates onboardingDone
+      router.push("/dashboard");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to sign in. Please check your password and try again."
+      );
+      setLoading(false);
+    }
   };
 
   return (

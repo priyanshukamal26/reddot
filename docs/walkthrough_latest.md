@@ -1,5 +1,57 @@
 # RedDot — Build Walkthrough
 
+## Session 5: Know Hub, Article Views, Navigation Sync & Local DB Mock (2026-07-05)
+
+### What was done
+
+**Completed Phase 4 milestones** by building the searchable/filtered educational Know Hub, creating dynamic article detail pages, implementing dynamic PillNav state synchronization, and programming a transparent local persistent mock database fallback.
+
+#### New files
+
+| File | Purpose |
+|------|---------|
+| [articles.ts](file:///c:/Projects/reddot/src/lib/articles.ts) | Educational articles database (4 cycle phase guides + 4 general topics) |
+| [page.tsx](file:///c:/Projects/reddot/src/app/dashboard/know/page.tsx) | Know Hub index page rendering searchable lists, category tabs, and topic filters |
+| [page.tsx](file:///c:/Projects/reddot/src/app/dashboard/know/[slug]/page.tsx) | Article detail page rendering responsive editorial typography, medical disclaimer box, and recommendations |
+
+#### Modified files
+
+| File | Changes |
+|------|---------|
+| [layout.tsx](file:///c:/Projects/reddot/src/app/dashboard/layout.tsx) | Integrated `usePathname` to keep active nav section state dynamically in sync with current route |
+| [neon.ts](file:///c:/Projects/reddot/src/lib/neon.ts) | Integrated transparent mock SQL executor (`mockSql` saving to `mock_db.json`) when `DATABASE_URL` is omitted, allowing out-of-the-box local sandbox runs |
+
+#### Verification
+All 23 routes compile successfully with zero TypeScript compilation errors and production builds successfully:
+```
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/ai/chat
+├ ƒ /api/ai/report
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/auth/salt
+├ ƒ /api/auth/signup
+├ ƒ /api/sync/pull
+├ ƒ /api/sync/push
+├ ƒ /api/user/meta
+├ ○ /dashboard
+├ ○ /dashboard/ai
+├ ○ /dashboard/cycle
+├ ○ /dashboard/insights
+├ ○ /dashboard/know
+├ ƒ /dashboard/know/[slug]
+├ ○ /dashboard/log
+├ ○ /dashboard/report
+├ ○ /dashboard/settings
+├ ○ /login
+├ ○ /onboarding
+├ ○ /privacy
+└ ○ /signup
+```
+
+---
+
 ## Session 4: Neon Sync, AI Chat, Report OCR & Recharts Insights (2026-07-05)
 
 ### What was done

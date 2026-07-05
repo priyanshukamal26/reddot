@@ -11,8 +11,8 @@
 
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import AuthGuard from "@/components/auth/AuthGuard";
 import AppShell from "@/components/layout/AppShell";
 import type { NavSection } from "@/components/nav/PillNav";
@@ -25,7 +25,27 @@ export default function DashboardLayout({
 }) {
   const { logout, meta, email, refreshMeta } = useAuth();
   const router = useRouter();
-  const [activeSection, setActiveSection] = useState<NavSection>("tracking");
+  const pathname = usePathname();
+
+  // Helper to determine active section from pathname
+  const getActiveSectionFromPath = useCallback((path: string): NavSection => {
+    if (path.startsWith("/dashboard/ai") || path.startsWith("/dashboard/report")) {
+      return "reddot-ai";
+    }
+    if (path.startsWith("/dashboard/know")) {
+      return "know";
+    }
+    return "tracking";
+  }, []);
+
+  const [activeSection, setActiveSection] = useState<NavSection>(() =>
+    getActiveSectionFromPath(pathname)
+  );
+
+  // Sync active section when path changes
+  useEffect(() => {
+    setActiveSection(getActiveSectionFromPath(pathname));
+  }, [pathname, getActiveSectionFromPath]);
 
   const handleSectionChange = useCallback(
     (section: NavSection) => {

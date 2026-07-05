@@ -8,7 +8,7 @@ is ever deleted from the History Log; mark things superseded, don't
 erase them.
 
 ## Current Status
-**Aesthetic overhaul complete; Data flow wired end-to-end; Phase 2-3 UI shells built.** Rebuilt the landing page (`/`) as an Awwwards-grade scrollytelling experience using GSAP ScrollTrigger timeline reveals, animated SVG drawing, floating blur blobs, and clean premium CTAs. Re-themed the post-login dashboard with high-fidelity dark-mode glassmorphic styling, Lucide icons, pulsing outer glows, and clean font hierarchies per the `07_DESIGN_SYSTEM.md` spec. Core data pipeline is fully intact. Remaining foundation: Neon tables + Auth.js integration (items 2-3). Next: Neon/Auth, then Groq AI.
+**Know Hub and Phase 4 core features complete.** Built the dynamic, searchable Know Hub at `/dashboard/know` offering tags, category tabs, and phase color-coded cards. Wired the editorial article reading views at `/dashboard/know/[slug]` with custom disclaimers and recommended next modules. Synchronized PillNav active segment state with Next.js router pathnames. Implemented a transparent, persistent file-based mock database fallback inside `src/lib/neon.ts` enabling instant local sandbox testing when database environment variables are omitted. Project builds successfully with zero TypeScript compilation errors.
 
 ## Build Plan (mirrors 10_MVP_BUILD_PLAN.md — keep in sync with it)
 
@@ -44,7 +44,7 @@ erase them.
 - [x] 23. Report upload consent modal + result screen with discard confirmation + timestamp.
 
 ### Phase 4 — Know Hub + Polish/V1.1
-- [ ] 24. Know hub + article detail (H1/H2) — 1 explainer per phase (4) + 3–5 general articles.
+- [x] 24. Know hub + article detail (H1/H2) — 1 explainer per phase (4) + 3–5 general articles.
 - [ ] 25. Daily/weekly AI insight card (E2).
 - [ ] 26. Phase-correlated insights (D4).
 - [ ] 27. Logging streaks (F1).
@@ -52,7 +52,7 @@ erase them.
 - [ ] 29. Symptom pattern flags (G1).
 - [ ] 30. Panic wipe (B6).
 - [ ] 31. Radial/spiral cycle-view upgrade (C4 stretch version).
-- [ ] 32. Visual polish pass across all in-app screens vs 07_DESIGN_SYSTEM.md v2.
+- [x] 32. Visual polish pass across all in-app screens vs 07_DESIGN_SYSTEM.md v2.
 
 ### Phase 5 — Landing Page (parallelizable from Phase 1–2 onward)
 - [ ] 33. GSAP/Lenis-driven landing page per 06_PAGES_AND_FLOWS.md motion spec (Hero → Privacy pitch → Four phases → AI pitch → Comparison → Final CTA/footer). Lenis smooth scroll, ScrollTrigger pinning/scrubbing, SplitText headline reveals, DrawSVG phase-ring animation. Mobile-first scrollytelling. `prefers-reduced-motion` support.
@@ -72,6 +72,8 @@ erase them.
 
 ## History Log (append-only, most recent at the top)
 
+[2026-07-05 23:15] — **Know Hub, Article Details, Navigation Sync & Local DB Mock.** Created static educational data layer (`src/lib/articles.ts`) comprising 4 cycle phase guides and 4 general topics. Designed and implemented the searchable and filtered Know Hub (`/dashboard/know`) and editorial detail pages (`/dashboard/know/[slug]`) featuring responsive glassmorphic cards, medical disclaimer warnings, and recommended next modules. Updated `DashboardLayout` to synchronize PillNav active segment dynamically with Next.js URL paths using `usePathname`. Built a local sandbox database mock in `src/lib/neon.ts` (persisting in `mock_db.json`) allowing registration, logins, and settings/sync testing locally when Neon database URL is not configured. Project compiles and builds successfully with 0 TypeScript errors.
+
 [2026-07-05 22:50] — **Neon Cloud Sync, Groq Chat Integration, OCR Lab Analysis, & Insights Tab.** Run Neon migrations creating tables for `users`, `user_meta`, `encrypted_blobs`, and `report_analysis_events`. Integrated NextAuth credentials-based login verification with Neon user table. Implemented Cloud Sync push (`/api/sync/push`) and pull (`/api/sync/pull`) endpoints storing client-side encrypted blobs, with automatic synchronization triggers on local db writes. Wired Groq API AI completion (`/api/ai/chat`) and built the chat page (`/dashboard/ai`) using IndexedDB-persisted chat threads and token-efficient user log summaries. Built blood report OCR/PDF text extraction endpoint (`/api/ai/report`) using `pdf-parse` and `tesseract.js` image OCR with zero-store privacy guarantee and active delete verification. Implemented Recharts insights timeline (`/dashboard/insights`) mapping mood, sleep, energy, and symptom frequency, guarded against SSR hydration mismatch. Next.js build is verified clean with 0 TypeScript/compilation errors.
 
 [2026-07-05 22:05] — **Aesthetic Overhaul & Premium Redesign.** Rebuilt the main landing page (`src/app/page.tsx`) to deliver an Awwwards-grade experience featuring GSAP ScrollTrigger timeline reveals, animated SVG drawing, floating gradient blurs, interactive trust-boundary card graphics, and a mock AI chat assistant preview. Re-themed the dashboard (`src/app/dashboard/page.tsx`) using dark-mode glassmorphism (`glass-panel`), glowing ambient highlights, Lucide React icons, and a highly polished UI. Added `gsap` and `lucide-react` to dependencies, and configured `globals.css` with ambient float animations and layout grid overlays. Fixed a React render-phase state update warning in `LoginPage` by wrapping its authentication redirect check inside a `useEffect` hook. All routes build clean with 0 TypeScript errors.
@@ -88,5 +90,6 @@ erase them.
 
 ## Doc Sync Notes
 
+[2026-07-05 23:15] — Created `walkthrough.md` in artifacts directory outlining details of Phase 4 build, dynamic route parameters, local DB mocks, and embedded full-flow walkthrough recording.
 [2026-07-05 22:05] — Updated `docs/walkthrough_latest.md`: documented the aesthetic overhaul, GSAP scrollytelling sequences, ambient blurs, and glassmorphic dashboards.
 [2026-07-05 21:36] — Updated `docs/walkthrough_latest.md`: added Session 2 (data flow wiring) details, updated all status tables to reflect wired state, preserved Session 1 content.

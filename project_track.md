@@ -84,4 +84,4 @@ erase them.
 
 ## Doc Sync Notes
 
-(No doc changes yet.)
+[2026-07-05 21:36] — Updated `docs/walkthrough_latest.md`: added Session 2 (data flow wiring) details, updated all status tables to reflect wired state, preserved Session 1 content.

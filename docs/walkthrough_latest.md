@@ -1,6 +1,47 @@
 # RedDot — Build Walkthrough
 
-## Completed: Initial Build Session (2026-07-04)
+## Session 2: Data Flow Wiring (2026-07-05)
+
+### What was done
+
+**Wired data flow end-to-end** — turned static screens into a working local-first encrypted product by connecting all UI screens to the data service → encryption layer → IndexedDB pipeline.
+
+#### New files
+
+| File | Purpose |
+|------|---------|
+| [auth-context.tsx](file:///c:/Projects/reddot/src/context/auth-context.tsx) | React context managing password-derived `CryptoKey` in memory. Provides `signup()`, `login()`, `logout()`, `refreshMeta()` |
+| [providers.tsx](file:///c:/Projects/reddot/src/app/providers.tsx) | Client component wrapper — bridges server-component root layout to client-side `AuthProvider` |
+| [AuthGuard.tsx](file:///c:/Projects/reddot/src/components/auth/AuthGuard.tsx) | Route protection: redirects to `/login` if unauthenticated, to `/onboarding` if not onboarded |
+| [layout.tsx](file:///c:/Projects/reddot/src/app/dashboard/layout.tsx) | Dashboard layout — wraps all `/dashboard/*` routes with AuthGuard + AppShell (nav + profile) |
+
+#### Modified files
+
+| File | Changes |
+|------|---------|
+| [layout.tsx](file:///c:/Projects/reddot/src/app/layout.tsx) | Wrapped children with `<Providers>` |
+| [signup/page.tsx](file:///c:/Projects/reddot/src/app/signup/page.tsx) | Calls `signup()` → derives key → saves salt → redirects to `/onboarding` |
+| [login/page.tsx](file:///c:/Projects/reddot/src/app/login/page.tsx) | Calls `login()` → loads salt → derives key → redirects to `/dashboard` |
+| [onboarding/page.tsx](file:///c:/Projects/reddot/src/app/onboarding/page.tsx) | Saves first `Cycle` record + sets `onboarding_done` in meta → redirects to dashboard |
+| [dashboard/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/page.tsx) | Reads real cycles via `loadAllCycles()` → calculates phase → drives PhaseRing + prediction |
+| [dashboard/log/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/log/page.tsx) | Saves real entries via `saveEntry()`, loads existing for editing, auto-creates Cycle on new period |
+| [dashboard/cycle/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/cycle/page.tsx) | Reads real entries via `loadAllEntries()` → transforms for heatmap, loads entry detail on click |
+
+#### Data flow architecture
+
+```
+Signup → password → PBKDF2(password, salt) → CryptoKey [in-memory only]
+
+Onboarding → Cycle + AppMeta → encrypt → IndexedDB
+Daily log  → DailyEntry      → encrypt → IndexedDB
+Dashboard  → IndexedDB → decrypt → calculateCycleStats() → PhaseRing
+Cycle view → IndexedDB → decrypt → heatmap + day detail
+Login      → loadMeta().salt → deriveKey() → resume session
+```
+
+---
+
+## Session 1: Initial Build (2026-07-04)
 
 ### What was done
 
@@ -26,19 +67,20 @@
 | Pill nav | ✅ | [PillNav.tsx](file:///c:/Projects/reddot/src/components/nav/PillNav.tsx) — sliding signal-red indicator |
 | Profile popup | ✅ | [ProfilePopup.tsx](file:///c:/Projects/reddot/src/components/nav/ProfilePopup.tsx) |
 | App shell | ✅ | [AppShell.tsx](file:///c:/Projects/reddot/src/components/layout/AppShell.tsx) |
+| Auth context | ✅ | [auth-context.tsx](file:///c:/Projects/reddot/src/context/auth-context.tsx) — local-first auth via PBKDF2 |
 | Neon tables | ⬜ | Not yet created — needs Neon project |
 | Auth.js | ⬜ | Not yet wired — needs Neon connection string |
 
-**Phase 1 — Core Tracking (UI built, data wiring pending)**
+**Phase 1 — Core Tracking (fully wired)**
 
 | Item | Status | Details |
 |------|--------|---------|
-| Onboarding | ✅ | [onboarding/page.tsx](file:///c:/Projects/reddot/src/app/onboarding/page.tsx) — 4-step flow |
-| Dashboard | ✅ | [dashboard/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/page.tsx) — PhaseRing + actions |
+| Onboarding | ✅ | [onboarding/page.tsx](file:///c:/Projects/reddot/src/app/onboarding/page.tsx) — 4-step flow, saves real data |
+| Dashboard | ✅ | [dashboard/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/page.tsx) — real PhaseRing + prediction |
 | Phase ring | ✅ | [PhaseRing.tsx](file:///c:/Projects/reddot/src/components/tracking/PhaseRing.tsx) — canvas gradient ring |
-| Daily log | ✅ | [dashboard/log/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/log/page.tsx) — <15s target |
-| Cycle heatmap | ✅ | [CycleHeatmap.tsx](file:///c:/Projects/reddot/src/components/tracking/CycleHeatmap.tsx) — GitHub-style |
-| Day detail | ✅ | [DayDetail.tsx](file:///c:/Projects/reddot/src/components/tracking/DayDetail.tsx) — slide-up panel |
+| Daily log | ✅ | [dashboard/log/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/log/page.tsx) — real encrypted save + edit |
+| Cycle heatmap | ✅ | [CycleHeatmap.tsx](file:///c:/Projects/reddot/src/components/tracking/CycleHeatmap.tsx) — real entry data |
+| Day detail | ✅ | [DayDetail.tsx](file:///c:/Projects/reddot/src/components/tracking/DayDetail.tsx) — real entry display |
 | Cycle view page | ✅ | [dashboard/cycle/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/cycle/page.tsx) |
 | Insights tab | ⬜ | Not yet built |
 
@@ -64,15 +106,16 @@
 
 | Page | File |
 |------|------|
-| Login | [login/page.tsx](file:///c:/Projects/reddot/src/app/login/page.tsx) |
-| Signup | [signup/page.tsx](file:///c:/Projects/reddot/src/app/signup/page.tsx) |
+| Login | [login/page.tsx](file:///c:/Projects/reddot/src/app/login/page.tsx) — wired to auth context |
+| Signup | [signup/page.tsx](file:///c:/Projects/reddot/src/app/signup/page.tsx) — wired to auth context |
 
 ### Build verification
 
-All 8 routes build clean with `npm run build`:
+All 9 routes build clean with `npm run build`:
 ```
 Route (app)
 ├ ○ /
+├ ○ /_not-found
 ├ ○ /dashboard
 ├ ○ /dashboard/cycle
 ├ ○ /dashboard/log
@@ -84,9 +127,8 @@ Route (app)
 
 ### What's next
 
-1. **Wire data flow end-to-end** — connect onboarding → data service → IndexedDB → dashboard (the screens exist, they need to read/write real data through the encryption layer)
-2. **Neon + Auth.js** — create Neon project, migrate tables, wire Auth.js credentials provider
-3. **Insights tab** — trend charts using Recharts
-4. **Export/Import** — the functions exist in data.ts, need UI triggers
-5. **Groq API integration** — wire the chat endpoint with the exact system prompts from 08_AI_PROMPTS_AND_LOGIC.md
-6. **Landing page** — GSAP/Lenis scroll sequence (Phase 5, parallelizable)
+1. **Neon + Auth.js** — create Neon project, migrate tables, wire Auth.js credentials provider (needs connection string from user)
+2. **Groq API integration** — wire the chat endpoint with the exact system prompts from 08_AI_PROMPTS_AND_LOGIC.md, connect chat UI shell (needs API key)
+3. **Insights tab** — trend charts using Recharts within Tracking
+4. **Export/Import UI** — functions exist in data.ts, need button triggers
+5. **Landing page** — GSAP/Lenis scroll sequence (Phase 5, parallelizable)

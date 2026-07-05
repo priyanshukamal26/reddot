@@ -339,24 +339,29 @@ export default function DailyLogPage() {
 
 async function maybeCreateCycle(date: string) {
   try {
-    // Check if yesterday was a period day
-    const yesterday = new Date(date);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    let startDate = date;
+    const checkDate = new Date(date);
 
-    const yesterdayEntry = await loadEntryByDate(yesterdayStr);
-
-    // If yesterday wasn't a period day (or no entry), this is a new cycle start
-    if (!yesterdayEntry?.periodFlag) {
-      // Check if a cycle already exists for this date
-      const allCycles = await loadAllCycles();
-      const existingCycle = allCycles.find((c) => c.startDate === date);
-      if (!existingCycle) {
-        await saveCycle({
-          cycleId: generateId(),
-          startDate: date,
-        });
+    // Trace backwards to find the first day of the consecutive period streak
+    for (let i = 0; i < 10; i++) { // Limit lookup to 10 days to prevent excessive reads
+      checkDate.setDate(checkDate.getDate() - 1);
+      const checkDateStr = checkDate.toISOString().split("T")[0];
+      const prevEntry = await loadEntryByDate(checkDateStr);
+      if (prevEntry?.periodFlag) {
+        startDate = checkDateStr;
+      } else {
+        break;
       }
+    }
+
+    // Ensure a cycle record exists for this period start date
+    const allCycles = await loadAllCycles();
+    const existingCycle = allCycles.find((c) => c.startDate === startDate);
+    if (!existingCycle) {
+      await saveCycle({
+        cycleId: generateId(),
+        startDate,
+      });
     }
   } catch (err) {
     console.error("Failed to check/create cycle:", err);

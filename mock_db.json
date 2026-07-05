@@ -6,6 +6,13 @@
       "password_hash": "$2b$10$I4pG5RcsgknexaB/Fj1xIuIQv5rdYolSOcMBYmVDFr9flD7r3/7Je",
       "created_at": "2026-07-05T17:10:28.132Z",
       "sync_enabled": false
+    },
+    {
+      "id": "yakpa2c2xnaxaxu4juc55",
+      "email": "test01@gmail.com",
+      "password_hash": "$2b$10$t3W5Y8WGL.VF.19lgaFZwOehxrqjNDBA.rBQj934sQz3eZrd9ZDxi",
+      "created_at": "2026-07-05T17:17:12.601Z",
+      "sync_enabled": false
     }
   ],
   "user_meta": [
@@ -15,8 +22,23 @@
       "onboarding_done": true,
       "sync_enabled": false,
       "last_export_at": null
+    },
+    {
+      "user_id": "yakpa2c2xnaxaxu4juc55",
+      "salt": "Jxrfd04cDDRPFFZ+RYcZQA==",
+      "onboarding_done": true,
+      "sync_enabled": false,
+      "last_export_at": "2026-07-05T17:17:56.867Z"
     }
   ],
-  "encrypted_blobs": [],
+  "encrypted_blobs": [
+    {
+      "user_id": "yakpa2c2xnaxaxu4juc55",
+      "blob_type": "full_sync",
+      "ciphertext": "VFqLJHmPeQBUTNQNHv9cALVGIOwFYYQ8RN89vevVrbqTEmkLJ/cerOKICP6WzDYfQ5f6gvBYR5curUK8y4NpfpPL6EiGI73amaPv205y2CqsWDUzVCvt6CoKimmGt6NMYH4nZiXtkDrsp6wfu2S1kSegkOOjwCpOp28IPKY9ZdzOLF1kS3iXuwabYKWhLiGW9HwbyO7BGdEY4zHRtt7SzuHvoqm6xKMoTx1xc/3qnAv8mudVy8abvkmKpmiqwb7rKosu9B1klBI5mtsUmPiAP5jZy/vYa3SmVrdGmiR/HFypf2LyLj1OX9CVmOk/vK+d8wEUEsyhWSzxPFB12cbhJssesFzwQpdF3J3J3F71K3rHrQ4IUG6Brha+NIXdVcT8znBctoJXGOtIykgDWIFSbDvk7Y2ztpGLK7XMw1bLNfT05y+mB1USBN/y5DK+cEtrG/8C/gQy2IZc0guaIQTIF70TigWkQP2UJZ4292kOBgxRidGTwI8pybO2NG4x2cdW+ayHNUreTXM7cXeoTmtffLgfa67bL8SFUahcF6XT6Hqiq1LLdkawMdEyFJGusWad3sTEF9QKYAKN+0YPUeBAelGbURA11PBNsQ967jGKf/vWH4dJAvc5dKvJ2VbO/QpY",
+      "iv": "Dn09fRNH9FJrYMp7",
+      "updated_at": "2026-07-05T17:17:56.867Z"
+    }
+  ],
   "report_analysis_events": []
 }

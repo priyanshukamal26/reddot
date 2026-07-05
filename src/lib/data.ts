@@ -91,7 +91,17 @@ export async function loadEntryByDate(date: string): Promise<DailyEntry | null> 
 export async function loadAllEntries(): Promise<DailyEntry[]> {
   const key = getKey();
   const records = await db.getAllEntries();
-  return Promise.all(records.map((r) => decryptEntry(key, r)));
+  const decoded = await Promise.all(
+    records.map(async (r) => {
+      try {
+        return await decryptEntry(key, r);
+      } catch (err) {
+        console.error(`Failed to decrypt daily entry ${r.entry_id}:`, err);
+        return null;
+      }
+    })
+  );
+  return decoded.filter((e): e is DailyEntry => e !== null);
 }
 
 export async function loadEntriesInRange(
@@ -100,7 +110,17 @@ export async function loadEntriesInRange(
 ): Promise<DailyEntry[]> {
   const key = getKey();
   const records = await db.getEntriesInRange(startDate, endDate);
-  return Promise.all(records.map((r) => decryptEntry(key, r)));
+  const decoded = await Promise.all(
+    records.map(async (r) => {
+      try {
+        return await decryptEntry(key, r);
+      } catch (err) {
+        console.error(`Failed to decrypt daily entry ${r.entry_id} in range:`, err);
+        return null;
+      }
+    })
+  );
+  return decoded.filter((e): e is DailyEntry => e !== null);
 }
 
 async function decryptEntry(
@@ -137,15 +157,21 @@ export async function saveCycle(cycle: Cycle): Promise<void> {
 export async function loadAllCycles(): Promise<Cycle[]> {
   const key = getKey();
   const records = await db.getAllCycles();
-  return Promise.all(
+  const decoded = await Promise.all(
     records.map(async (r) => {
-      const payload = await decryptJSON<Omit<Cycle, "cycleId" | "startDate">>(
-        key,
-        { ciphertext: r.encrypted_payload, iv: r.iv }
-      );
-      return { cycleId: r.cycle_id, startDate: r.start_date, ...payload };
+      try {
+        const payload = await decryptJSON<Omit<Cycle, "cycleId" | "startDate">>(
+          key,
+          { ciphertext: r.encrypted_payload, iv: r.iv }
+        );
+        return { cycleId: r.cycle_id, startDate: r.start_date, ...payload };
+      } catch (err) {
+        console.error(`Failed to decrypt cycle record ${r.cycle_id}:`, err);
+        return null;
+      }
     })
   );
+  return decoded.filter((c): c is Cycle => c !== null);
 }
 
 // ──────────────────────────────────────────────
@@ -191,20 +217,26 @@ export async function loadChat(chatId: string): Promise<Chat | null> {
 export async function loadAllChats(): Promise<Chat[]> {
   const key = getKey();
   const records = await db.getAllChats();
-  return Promise.all(
+  const decoded = await Promise.all(
     records.map(async (r) => {
-      const payload = await decryptJSON<{ messages: ChatMessage[] }>(key, {
-        ciphertext: r.encrypted_payload,
-        iv: r.iv,
-      });
-      return {
-        chatId: r.chat_id,
-        createdAt: r.created_at,
-        titleHint: r.title_hint,
-        messages: payload.messages,
-      };
+      try {
+        const payload = await decryptJSON<{ messages: ChatMessage[] }>(key, {
+          ciphertext: r.encrypted_payload,
+          iv: r.iv,
+        });
+        return {
+          chatId: r.chat_id,
+          createdAt: r.created_at,
+          titleHint: r.title_hint,
+          messages: payload.messages,
+        };
+      } catch (err) {
+        console.error(`Failed to decrypt chat record ${r.chat_id}:`, err);
+        return null;
+      }
     })
   );
+  return decoded.filter((c): c is Chat => c !== null);
 }
 
 /**

@@ -119,11 +119,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(data.error || "Failed to create account.");
     }
 
-    // 2. Derive key in memory client-side
+    // 2. Derive key client-side and set in memory
     const key = await deriveKey(password, salt);
     setEncryptionKey(key);
 
-    // 3. Authenticate with NextAuth
+    // Clear local IndexedDB databases if switching users to prevent data leakage/corruption
+    if (typeof window !== "undefined") {
+      const lastEmail = localStorage.getItem("last_logged_in_email");
+      if (lastEmail && lastEmail !== emailInput) {
+        const { clearAllData } = await import("@/lib/db");
+        await clearAllData();
+      }
+      localStorage.setItem("last_logged_in_email", emailInput);
+    }
+
+    // 3. Sign in to NextAuth session to establish cookies
     const signInResult = await nextAuthSignIn("credentials", {
       email: emailInput,
       password,
@@ -161,24 +171,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (emailInput: string, password: string) => {
-    // 1. Retrieve salt (from IndexedDB if matching email/device, else fetch from server DB)
-    let salt = "";
-    const localMeta = await loadMeta();
-    if (localMeta && localMeta.salt) {
-      salt = localMeta.salt;
-    } else {
-      const saltRes = await fetch(`/api/auth/salt?email=${encodeURIComponent(emailInput)}`);
-      if (!saltRes.ok) {
-        const data = await saltRes.json();
-        throw new Error(data.error || "No account found. Please sign up first.");
-      }
+    // 1. Retrieve salt from server for the specified email to prevent cached salt mismatch on multi-user devices
+    const saltRes = await fetch(`/api/auth/salt?email=${encodeURIComponent(emailInput)}`);
+    if (!saltRes.ok) {
       const data = await saltRes.json();
-      salt = data.salt;
+      throw new Error(data.error || "No account found. Please sign up first.");
     }
+    const data = await saltRes.json();
+    const salt = data.salt;
 
     // 2. Derive key in memory client-side
     const key = await deriveKey(password, salt);
     setEncryptionKey(key);
+
+    // Clear local IndexedDB databases if switching users to prevent data leakage/corruption
+    if (typeof window !== "undefined") {
+      const lastEmail = localStorage.getItem("last_logged_in_email");
+      if (lastEmail && lastEmail !== emailInput) {
+        const { clearAllData } = await import("@/lib/db");
+        await clearAllData();
+      }
+      localStorage.setItem("last_logged_in_email", emailInput);
+    }
 
     // 3. Sign in to NextAuth session
     const signInResult = await nextAuthSignIn("credentials", {
@@ -213,6 +227,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       salt,
     };
     await saveMeta(updatedMeta);
+
+    // 6. If sync is enabled or a backup exists, pull and restore the encrypted backup from server
+    if (syncEnabled || lastExport) {
+      try {
+        const { pullAndSync } = await import("@/lib/data");
+        await pullAndSync();
+        const freshMeta = await loadMeta();
+        if (freshMeta) {
+          onboarding = freshMeta.onboarding_done;
+          updatedMeta.onboarding_done = onboarding;
+          updatedMeta.last_export_at = freshMeta.last_export_at;
+          updatedMeta.sync_enabled = freshMeta.sync_enabled;
+        }
+      } catch (err) {
+        console.error("Failed to pull sync data during login:", err);
+      }
+    }
 
     setMeta(updatedMeta);
     setOnboardingDone(onboarding);

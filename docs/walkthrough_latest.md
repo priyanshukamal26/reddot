@@ -1,10 +1,10 @@
 # RedDot — Build Walkthrough
 
-## Session 5: Know Hub, Article Views, Navigation Sync & Local DB Mock (2026-07-05)
+## Session 5: Know Hub, Article Views, Navigation Sync, Local DB Mock, Login Sync Recovery & Resilient Decryption (2026-07-05)
 
 ### What was done
 
-**Completed Phase 4 milestones** by building the searchable/filtered educational Know Hub, creating dynamic article detail pages, implementing dynamic PillNav state synchronization, and programming a transparent local persistent mock database fallback.
+**Completed Phase 4 milestones, resolved login sync restore bug & added decryption resilience** by building the searchable/filtered educational Know Hub, creating dynamic article detail pages, implementing dynamic PillNav state synchronization, programming a transparent local persistent mock database fallback, wiring automatic cloud sync restores on successful logins, and building error-resilient decryption wrappers in the local data service to skip corrupted/unreadable records.
 
 #### New files
 
@@ -20,6 +20,8 @@
 |------|---------|
 | [layout.tsx](file:///c:/Projects/reddot/src/app/dashboard/layout.tsx) | Integrated `usePathname` to keep active nav section state dynamically in sync with current route |
 | [neon.ts](file:///c:/Projects/reddot/src/lib/neon.ts) | Integrated transparent mock SQL executor (`mockSql` saving to `mock_db.json`) when `DATABASE_URL` is omitted, allowing out-of-the-box local sandbox runs |
+| [auth-context.tsx](file:///c:/Projects/reddot/src/context/auth-context.tsx) | Integrated automatic `pullAndSync()` invocation during user login when sync is enabled to restore browser IndexedDB records |
+| [data.ts](file:///c:/Projects/reddot/src/lib/data.ts) | Added defensive try-catch decryption wrapping for all bulk read operations (entries, cycles, chats) to prevent corrupted records from crashing the dashboard |
 
 #### Verification
 All 23 routes compile successfully with zero TypeScript compilation errors and production builds successfully:

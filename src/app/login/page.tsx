@@ -41,7 +41,7 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(password);
+      await login(email, password);
       // Login succeeded — redirect based on onboarding status
       // Note: the refreshMeta in login updates onboardingDone
       router.push("/dashboard");

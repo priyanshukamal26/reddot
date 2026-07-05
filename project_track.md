@@ -14,8 +14,8 @@ erase them.
 
 ### Phase 0 — Foundation
 - [x] 1. Next.js + TypeScript + Tailwind scaffold, deployed to Vercel. Tailwind theme configured with v2 design tokens (`void`/`paper`/`signal`/`signal-deep`/`ash`/`fog`/`error` + phase-ramp tokens `phase-signal`/`phase-rise`/`phase-peak`/`phase-fade`).
-- [ ] 2. Neon project + tables migrated (`users`, `encrypted_blobs`, `user_meta`, `report_analysis_events`).
-- [ ] 3. Auth.js wired to Neon `users` table — sign up / log in working E2E.
+- [x] 2. Neon project + tables migrated (`users`, `encrypted_blobs`, `user_meta`, `report_analysis_events`).
+- [x] 3. Auth.js wired to Neon `users` table — sign up / log in working E2E.
 - [x] 4. Encryption layer: PBKDF2 key derivation (100k iterations, SHA-256) + AES-GCM 256-bit encrypt/decrypt utility functions in `lib/crypto.ts`. Unit tested in isolation.
 - [x] 5. IndexedDB wrapper (via `idb`) with `entries`/`cycles`/`meta`/`chats` stores per 04_DATA_MODEL.md.
 - [x] 6. Pill nav component (Tracking / RedDot.ai / Know segments + Profile button, sliding active-state fill).
@@ -26,22 +26,22 @@ erase them.
 - [x] 9. Daily log screen (mood, symptoms, sleep/energy/appetite/exercise, journal) → encryption layer → IndexedDB.
 - [x] 10. Creative cycle-history view (heatmap version — MVP-safe per C4) + day detail slide-up panel.
 - [x] 11. Irregular-cycle-aware prediction logic (C2 range-based prediction). Simple average first, then regular/irregular check.
-- [ ] 12. Cycle Insights tab within Tracking (trend charts) — basic version.
+- [x] 12. Cycle Insights tab within Tracking (trend charts) — basic version.
 
 ### Phase 2 — Privacy Features
-- [ ] 13. Export (encrypted backup file download, includes chat history).
-- [ ] 14. Import (restore from backup file, includes chats).
-- [ ] 15. Last-backup indicator on dashboard + Profile popup.
-- [ ] 16. Sync toggle + Neon sync endpoint (ciphertext push/pull via `encrypted_blobs`).
+- [x] 13. Export (encrypted backup file download, includes chat history).
+- [x] 14. Import (restore from backup file, includes chats).
+- [x] 15. Last-backup indicator on dashboard + Profile popup.
+- [x] 16. Sync toggle + Neon sync endpoint (ciphertext push/pull via `encrypted_blobs`).
 - [ ] 17. Password reset flow with data-loss warning modal.
 - [x] 18. Privacy page (B7) — content-heavy; mentions RedDot.ai by name, discloses AI plaintext exception honestly, all mandatory disclaimers placed per 09_SECURITY_AND_PRIVACY.md table.
 
 ### Phase 3 — AI Layer ("RedDot.ai")
-- [ ] 19. Groq API key setup, basic chat endpoint wired to chat UI under RedDot.ai pill. Uses system prompt from 08_AI_PROMPTS_AND_LOGIC.md verbatim (shared safety preamble + E1 prompt).
-- [ ] 20. Encrypted local chat history: write exchanges to `chats` IndexedDB store, past-chats list (content-neutral `title_hint`), resume-from-history with context intact. (MVP-tier, feature E5.)
-- [ ] 21. RedDot.ai first-use disclaimer modal.
-- [ ] 22. Report analysis mode/tab within RedDot.ai: file handling → OCR/text-extraction → Groq call → response (E3 system prompt).
-- [ ] 23. Report upload consent modal + result screen with discard confirmation + timestamp.
+- [x] 19. Groq API key setup, basic chat endpoint wired to chat UI under RedDot.ai pill. Uses system prompt from 08_AI_PROMPTS_AND_LOGIC.md verbatim (shared safety preamble + E1 prompt).
+- [x] 20. Encrypted local chat history: write exchanges to `chats` IndexedDB store, past-chats list (content-neutral `title_hint`), resume-from-history with context intact. (MVP-tier, feature E5.)
+- [x] 21. RedDot.ai first-use disclaimer modal.
+- [x] 22. Report analysis mode/tab within RedDot.ai: file handling → OCR/text-extraction → Groq call → response (E3 system prompt).
+- [x] 23. Report upload consent modal + result screen with discard confirmation + timestamp.
 
 ### Phase 4 — Know Hub + Polish/V1.1
 - [ ] 24. Know hub + article detail (H1/H2) — 1 explainer per phase (4) + 3–5 general articles.
@@ -71,6 +71,8 @@ erase them.
 [2026-07-04 16:20] — `11_STITCH_PROMPT.md` referenced in user instructions does not exist in `docs/`. Only 11 files (00–10) are present. Proceeding without it; no action needed since it was for Stitch mockup generation, not code.
 
 ## History Log (append-only, most recent at the top)
+
+[2026-07-05 22:50] — **Neon Cloud Sync, Groq Chat Integration, OCR Lab Analysis, & Insights Tab.** Run Neon migrations creating tables for `users`, `user_meta`, `encrypted_blobs`, and `report_analysis_events`. Integrated NextAuth credentials-based login verification with Neon user table. Implemented Cloud Sync push (`/api/sync/push`) and pull (`/api/sync/pull`) endpoints storing client-side encrypted blobs, with automatic synchronization triggers on local db writes. Wired Groq API AI completion (`/api/ai/chat`) and built the chat page (`/dashboard/ai`) using IndexedDB-persisted chat threads and token-efficient user log summaries. Built blood report OCR/PDF text extraction endpoint (`/api/ai/report`) using `pdf-parse` and `tesseract.js` image OCR with zero-store privacy guarantee and active delete verification. Implemented Recharts insights timeline (`/dashboard/insights`) mapping mood, sleep, energy, and symptom frequency, guarded against SSR hydration mismatch. Next.js build is verified clean with 0 TypeScript/compilation errors.
 
 [2026-07-05 22:05] — **Aesthetic Overhaul & Premium Redesign.** Rebuilt the main landing page (`src/app/page.tsx`) to deliver an Awwwards-grade experience featuring GSAP ScrollTrigger timeline reveals, animated SVG drawing, floating gradient blurs, interactive trust-boundary card graphics, and a mock AI chat assistant preview. Re-themed the dashboard (`src/app/dashboard/page.tsx`) using dark-mode glassmorphism (`glass-panel`), glowing ambient highlights, Lucide React icons, and a highly polished UI. Added `gsap` and `lucide-react` to dependencies, and configured `globals.css` with ambient float animations and layout grid overlays. Fixed a React render-phase state update warning in `LoginPage` by wrapping its authentication redirect check inside a `useEffect` hook. All routes build clean with 0 TypeScript errors.
 

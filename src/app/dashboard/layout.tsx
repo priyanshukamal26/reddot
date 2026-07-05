@@ -23,7 +23,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { logout, meta } = useAuth();
+  const { logout, meta, email, refreshMeta } = useAuth();
   const router = useRouter();
   const [activeSection, setActiveSection] = useState<NavSection>("tracking");
 
@@ -42,14 +42,41 @@ export default function DashboardLayout({
     router.replace("/login");
   }, [logout, router]);
 
+  const handleOpenSettings = useCallback(() => {
+    router.push("/dashboard/settings");
+  }, [router]);
+
+  const handleToggleSync = useCallback(async () => {
+    if (!meta) return;
+    try {
+      const nextState = !meta.sync_enabled;
+      const updatedMeta = { ...meta, sync_enabled: nextState };
+
+      // Save directly to metadata store first
+      const { putMeta } = await import("@/lib/db");
+      await putMeta(updatedMeta);
+
+      if (nextState) {
+        const { forcePushSync } = await import("@/lib/data");
+        await forcePushSync();
+      }
+
+      await refreshMeta();
+    } catch (err) {
+      console.error("Failed to toggle sync in layout:", err);
+    }
+  }, [meta, refreshMeta]);
+
   return (
     <AuthGuard requireOnboarding={true}>
       <AppShell
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
-        email="user@reddot.app"
+        email={email || "user@reddot.app"}
         syncEnabled={meta?.sync_enabled ?? false}
         lastBackupAt={meta?.last_export_at ?? null}
+        onToggleSync={handleToggleSync}
+        onOpenSettings={handleOpenSettings}
         onLogout={handleLogout}
       >
         {children}

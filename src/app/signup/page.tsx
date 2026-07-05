@@ -48,9 +48,7 @@ export default function SignupPage() {
 
     try {
       // Derive encryption key from password, save salt to IndexedDB
-      await signup(password);
-      // Note: email is collected for future Neon/Auth.js integration
-      // but not used in local-only mode yet
+      await signup(email, password);
       router.push("/onboarding");
     } catch (err) {
       setError(

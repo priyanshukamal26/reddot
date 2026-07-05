@@ -7,7 +7,7 @@ import { useAuth } from "@/context/auth-context";
 import { loadAllCycles } from "@/lib/data";
 import { calculateCycleStats, getCurrentPhase, predictNextPeriod, formatDate, daysUntil } from "@/lib/cycle";
 import type { Cycle, CurrentPhase as CurrentPhaseType } from "@/lib/types";
-import { Calendar, PenLine, Sparkles, AlertCircle, Database, LogOut } from "lucide-react";
+import { Calendar, PenLine, Sparkles, AlertCircle, Database, LogOut, TrendingUp } from "lucide-react";
 
 // ──────────────────────────────────────────────
 // Dashboard — the default landing screen after login
@@ -160,34 +160,49 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Quick actions ── */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <button
             onClick={() => router.push("/dashboard/log")}
-            className="glass-panel text-left p-5 rounded-md hover:bg-ash/50 hover:border-signal/30 group transition-all duration-300 shadow-lg relative overflow-hidden"
+            className="glass-panel text-left p-4 rounded-md hover:bg-ash/50 hover:border-signal/30 group transition-all duration-300 shadow-lg relative overflow-hidden"
           >
-            <div className="absolute top-4 right-4 text-fog/30 group-hover:text-signal transition-colors">
-              <PenLine className="w-5 h-5" />
+            <div className="absolute top-3 right-3 text-fog/30 group-hover:text-signal transition-colors">
+              <PenLine className="w-4 h-4" />
             </div>
-            <div className="text-sm font-semibold text-paper tracking-wide">
+            <div className="text-xs font-semibold text-paper tracking-wide">
               Log Today
             </div>
-            <div className="text-[11px] text-fog mt-1 leading-normal">
+            <div className="text-[10px] text-fog mt-1 leading-normal">
               Symptoms, mood, daily logs
             </div>
           </button>
 
           <button
             onClick={() => router.push("/dashboard/cycle")}
-            className="glass-panel text-left p-5 rounded-md hover:bg-ash/50 hover:border-signal/30 group transition-all duration-300 shadow-lg relative overflow-hidden"
+            className="glass-panel text-left p-4 rounded-md hover:bg-ash/50 hover:border-signal/30 group transition-all duration-300 shadow-lg relative overflow-hidden"
           >
-            <div className="absolute top-4 right-4 text-fog/30 group-hover:text-signal transition-colors">
-              <Calendar className="w-5 h-5" />
+            <div className="absolute top-3 right-3 text-fog/30 group-hover:text-signal transition-colors">
+              <Calendar className="w-4 h-4" />
             </div>
-            <div className="text-sm font-semibold text-paper tracking-wide">
+            <div className="text-xs font-semibold text-paper tracking-wide">
               Cycle View
             </div>
-            <div className="text-[11px] text-fog mt-1 leading-normal">
-              Heatmap contributions & patterns
+            <div className="text-[10px] text-fog mt-1 leading-normal">
+              Heatmap & patterns
+            </div>
+          </button>
+
+          <button
+            onClick={() => router.push("/dashboard/insights")}
+            className="glass-panel text-left p-4 rounded-md hover:bg-ash/50 hover:border-signal/30 group transition-all duration-300 shadow-lg relative overflow-hidden"
+          >
+            <div className="absolute top-3 right-3 text-fog/30 group-hover:text-signal transition-colors">
+              <TrendingUp className="w-4 h-4" />
+            </div>
+            <div className="text-xs font-semibold text-paper tracking-wide">
+              Insights
+            </div>
+            <div className="text-[10px] text-fog mt-1 leading-normal">
+              Trend charts & stats
             </div>
           </button>
         </div>

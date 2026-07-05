@@ -1,5 +1,64 @@
 # RedDot — Build Walkthrough
 
+## Session 4: Neon Sync, AI Chat, Report OCR & Recharts Insights (2026-07-05)
+
+### What was done
+
+**Completed Phase 0–3 MVP milestones** by establishing serverless Neon database cloud sync, Credentials-based Auth.js integration, Groq API chat, lab report OCR parsing, and a Recharts insights dashboard.
+
+#### Added dependencies
+- `@neondatabase/serverless` (Postgres client)
+- `next-auth@5.0.0-beta.28` (Credentials Provider integration)
+- `bcryptjs` / `@types/bcryptjs` (server password hashing)
+- `recharts` (trends timeline)
+- `pdf-parse` (PDF text extractor)
+- `tesseract.js` (Image OCR engine)
+
+#### New database and sync endpoints
+- **Database Schema**: Setup `users`, `user_meta`, `encrypted_blobs`, and `report_analysis_events` tables in Neon Postgres (`src/scripts/migrate.js`).
+- **Authentication Routes**: Added `/api/auth/signup` (credential validation and server-side password hashing) and `/api/auth/salt` (retrieves the unique PBKDF2 salt for login key derivation on new devices).
+- **Sync Endpoints**: Added `/api/sync/push` (receives and stores encrypted JSON db bundles) and `/api/sync/pull` (serves the synced ciphertext to the client).
+- **Auto-Sync Hook**: Wired client data writes (`saveEntry`, `saveCycle`, `saveChat`) in `src/lib/data.ts` to automatically push encrypted backup bundles to Neon in the background if cloud sync is enabled.
+
+#### RedDot.ai chat completions & lab OCR
+- **Chat Endpoint (`/api/ai/chat`)**: Integrates the Groq Llama 3.3 model using the verbatim prompts, safety preamble, and personalized context (the last 30 days of logged data and cycle phase status).
+- **Lab report analysis (`/api/ai/report`)**: Parses uploaded reports in-memory using `pdf-parse` (for text PDFs) or `tesseract.js` (for image OCR). Highlights outliers, suggests questions for doctors, and enforces a strict zero-store security policy with active memory discard verification.
+- **AI Chat Page (`/dashboard/ai`)**: Connects the chat UI component to IndexedDB-persisted chat history threads.
+- **Lab Report Page (`/dashboard/report`)**: Renders file upload, consent dialog, and ephemeral processing results.
+
+#### Recharts Insights timeline
+- **Insights Page (`/dashboard/insights`)**: Visualizes user statistics and timelines for mood, sleep, energy, and symptom frequencies using Recharts, guarded against static hydration issues.
+- **Settings Page (`/dashboard/settings`)**: Integrates backup exports/imports and sync toggles.
+
+#### Verification
+All 22 routes compile successfully with zero TypeScript compilation errors and production builds successfully:
+```
+Route (app)
+├ ○ /
+├ ○ /_not-found
+├ ƒ /api/ai/chat
+├ ƒ /api/ai/report
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/auth/salt
+├ ƒ /api/auth/signup
+├ ƒ /api/sync/pull
+├ ƒ /api/sync/push
+├ ƒ /api/user/meta
+├ ○ /dashboard
+├ ○ /dashboard/ai
+├ ○ /dashboard/cycle
+├ ○ /dashboard/insights
+├ ○ /dashboard/log
+├ ○ /dashboard/report
+├ ○ /dashboard/settings
+├ ○ /login
+├ ○ /onboarding
+├ ○ /privacy
+└ ○ /signup
+```
+
+---
+
 ## Session 3: Aesthetic Overhaul (2026-07-05)
 
 ### What was done

@@ -19,6 +19,7 @@ interface AppShellProps {
   lastBackupAt?: string | null;
   onToggleSync?: () => void;
   onLogout?: () => void;
+  onOpenSettings?: () => void;
 }
 
 export default function AppShell({
@@ -30,6 +31,7 @@ export default function AppShell({
   lastBackupAt = null,
   onToggleSync,
   onLogout,
+  onOpenSettings,
 }: AppShellProps) {
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -62,7 +64,7 @@ export default function AppShell({
           onToggleSync={onToggleSync}
           onOpenSettings={() => {
             handleCloseProfile();
-            // TODO: navigate to settings
+            onOpenSettings?.();
           }}
           onLogout={() => {
             handleCloseProfile();

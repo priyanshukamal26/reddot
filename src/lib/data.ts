@@ -3,7 +3,7 @@
  *
  * The bridge between UI ↔ encryption ↔ IndexedDB.
  *
- * All write operations: serialize → encrypt → store in IndexedDB
+ * All write operations: serialize → encrypt → store in IndexedDB → auto-sync (if enabled)
  * All read operations: read from IndexedDB → decrypt → deserialize
  *
  * This ensures the UI never needs to know about encryption details.
@@ -71,6 +71,7 @@ export async function saveEntry(entry: DailyEntry): Promise<void> {
   };
 
   await db.putEntry(record);
+  await syncIfEnabled();
 }
 
 export async function loadEntry(entryId: string): Promise<DailyEntry | null> {
@@ -130,6 +131,7 @@ export async function saveCycle(cycle: Cycle): Promise<void> {
   };
 
   await db.putCycle(record);
+  await syncIfEnabled();
 }
 
 export async function loadAllCycles(): Promise<Cycle[]> {
@@ -165,6 +167,7 @@ export async function saveChat(chat: Chat): Promise<void> {
   };
 
   await db.putChat(record);
+  await syncIfEnabled();
 }
 
 export async function loadChat(chatId: string): Promise<Chat | null> {
@@ -243,4 +246,108 @@ export async function exportData(): Promise<string> {
 export async function importData(json: string): Promise<void> {
   const bundle = JSON.parse(json);
   await db.importAll(bundle);
+}
+
+// ──────────────────────────────────────────────
+// Synchronisation (Neon Cloud Sync)
+// ──────────────────────────────────────────────
+
+/**
+ * Automatically pushes data to Neon if sync is enabled.
+ */
+async function syncIfEnabled(): Promise<void> {
+  try {
+    const meta = await db.getMeta();
+    if (!meta || !meta.sync_enabled) return;
+
+    const key = getKey();
+    const bundle = await db.exportAll();
+    const encrypted = await encryptJSON(key, bundle);
+
+    const res = await fetch("/api/sync/push", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        blob_type: "full_sync",
+        ciphertext: encrypted.ciphertext,
+        iv: encrypted.iv,
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      meta.last_export_at = data.updated_at;
+      await db.putMeta(meta);
+    }
+  } catch (err) {
+    console.error("Auto-sync failed:", err);
+  }
+}
+
+/**
+ * Force pushes current IndexedDB state to the server.
+ */
+export async function forcePushSync(): Promise<void> {
+  const key = getKey();
+  const bundle = await db.exportAll();
+  const encrypted = await encryptJSON(key, bundle);
+
+  const res = await fetch("/api/sync/push", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      blob_type: "full_sync",
+      ciphertext: encrypted.ciphertext,
+      iv: encrypted.iv,
+    }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to push sync data to server.");
+  }
+
+  const data = await res.json();
+  const meta = await db.getMeta();
+  if (meta) {
+    meta.last_export_at = data.updated_at;
+    await db.putMeta(meta);
+  }
+}
+
+/**
+ * Pulls synced database state from the server and restores it.
+ */
+export async function pullAndSync(): Promise<boolean> {
+  try {
+    const key = getKey();
+    const res = await fetch("/api/sync/pull?blob_type=full_sync");
+    if (!res.ok) {
+      if (res.status === 404) {
+        return false; // No server backup found
+      }
+      throw new Error("Failed to pull sync data.");
+    }
+
+    const data = await res.json();
+    const decryptedBundle = await decryptJSON<any>(key, {
+      ciphertext: data.ciphertext,
+      iv: data.iv,
+    });
+
+    if (decryptedBundle) {
+      await db.importAll(decryptedBundle);
+
+      // Update local last backup time
+      const meta = await db.getMeta();
+      if (meta) {
+        meta.last_export_at = data.updated_at;
+        await db.putMeta(meta);
+      }
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error("Pull-sync failed:", err);
+    throw err;
+  }
 }

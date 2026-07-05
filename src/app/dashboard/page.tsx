@@ -4,22 +4,24 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import PhaseRing from "@/components/tracking/PhaseRing";
 import { useAuth } from "@/context/auth-context";
-import { loadAllCycles, loadMeta } from "@/lib/data";
+import { loadAllCycles } from "@/lib/data";
 import { calculateCycleStats, getCurrentPhase, predictNextPeriod, formatDate, daysUntil } from "@/lib/cycle";
 import type { Cycle, CurrentPhase as CurrentPhaseType } from "@/lib/types";
+import { Calendar, PenLine, Sparkles, AlertCircle, Database, LogOut } from "lucide-react";
 
 // ──────────────────────────────────────────────
 // Dashboard — the default landing screen after login
 //
-// Per 06_PAGES_AND_FLOWS.md: phase-ring, today's quick-log entry point,
-// last-backup indicator, AI insight preview.
-//
-// Now reads real cycle data from IndexedDB via data service.
+// Re-designed for premium Awwwards-grade visual impact:
+// - Ambient dark grid backdrop + blurred glows
+// - Glassmorphic panels with white/red border highlights
+// - Custom micro-interactions and sleek Lucide icons
+// - Fully wired to local decrypted IndexedDB cycles
 // ──────────────────────────────────────────────
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { meta } = useAuth();
+  const { meta, logout } = useAuth();
   const [greeting, setGreeting] = useState("");
   const [phase, setPhase] = useState<CurrentPhaseType | null>(null);
   const [prediction, setPrediction] = useState<string>("");
@@ -40,7 +42,6 @@ export default function DashboardPage() {
         const cycles = await loadAllCycles();
 
         if (cycles.length === 0) {
-          // No cycles — shouldn't happen if onboarding completed, but handle gracefully
           setLoading(false);
           return;
         }
@@ -64,10 +65,10 @@ export default function DashboardPage() {
           setPrediction("Period may have started");
         } else if (pred.confidence === "irregular" && pred.rangeStart && pred.rangeEnd) {
           setPrediction(
-            `Next period: ${formatDate(pred.rangeStart)} – ${formatDate(pred.rangeEnd)}`
+            `Expected window: ${formatDate(pred.rangeStart)} – ${formatDate(pred.rangeEnd)}`
           );
         } else {
-          setPrediction(`Next period: ~${formatDate(pred.expectedDate)} (${days}d)`);
+          setPrediction(`Next Period: ~${formatDate(pred.expectedDate)} (${days} days)`);
         }
       } catch (err) {
         console.error("Failed to load cycle data:", err);
@@ -89,98 +90,139 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8 flex justify-center">
+      <div className="min-h-screen bg-void flex items-center justify-center space-grid">
         <div className="w-8 h-8 border-2 border-signal border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-      {/* ── Greeting ── */}
-      <div>
-        <h1 className="text-2xl font-bold text-paper">{greeting}</h1>
-        <p className="text-fog text-sm mt-1">
-          Here&apos;s your cycle at a glance.
-        </p>
-      </div>
+    <div className="min-h-screen bg-void text-paper relative space-grid py-12 px-4 overflow-hidden">
+      {/* ── Ambient Background Glows ── */}
+      <div className="absolute top-[20%] left-[-20%] w-[400px] h-[400px] rounded-full bg-signal/5 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-signal-deep/10 blur-[150px] pointer-events-none" />
 
-      {/* ── Phase Ring ── */}
-      {phase ? (
-        <div className="flex justify-center py-4">
-          <PhaseRing
-            currentPhase={phase.phase}
-            dayWithinPhase={phase.dayWithinPhase}
-            cycleDay={phase.cycleDay}
-            size={220}
-          />
+      <div className="max-w-xl mx-auto space-y-8 relative z-10">
+        {/* ── Header Greeting ── */}
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-paper">{greeting}</h1>
+            <p className="text-fog text-xs mt-1 font-mono uppercase tracking-wider">
+              Secure Local Sandbox
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              logout();
+              router.replace("/login");
+            }}
+            className="p-2 rounded bg-ash/60 border border-white/5 text-fog hover:text-signal transition-colors"
+            title="Log Out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
-      ) : (
-        <div className="flex justify-center py-8">
-          <div className="text-center space-y-2">
-            <div className="w-40 h-40 mx-auto rounded-full border-2 border-ash flex items-center justify-center">
-              <span className="text-fog text-sm">No data yet</span>
+
+        {/* ── Main Phase Card (Glassmorphic) ── */}
+        <div className="glass-panel rounded-lg p-6 flex flex-col items-center justify-center space-y-6 relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+          {/* Subtle accent corner element */}
+          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-signal/5 to-transparent pointer-events-none" />
+
+          {phase ? (
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative">
+                {/* Ring Ambient Background Glow */}
+                <div className="absolute inset-0 rounded-full bg-signal/5 blur-[30px] scale-110 pointer-events-none" />
+                <PhaseRing
+                  currentPhase={phase.phase}
+                  dayWithinPhase={phase.dayWithinPhase}
+                  cycleDay={phase.cycleDay}
+                  size={200}
+                />
+              </div>
+
+              {prediction && (
+                <div className="px-4 py-1.5 rounded bg-void/50 border border-white/5 text-xs text-fog font-mono tracking-wide text-center">
+                  {prediction}
+                </div>
+              )}
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="w-36 h-36 rounded-full border border-dashed border-white/10 flex items-center justify-center">
+                <span className="text-fog/40 text-xs">No active cycle</span>
+              </div>
+              <p className="text-xs text-fog/60 text-center max-w-xs">
+                Complete onboarding or log a period start to construct your phase ring.
+              </p>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* ── Prediction ── */}
-      {prediction && (
-        <p className="text-center text-sm text-fog font-mono">{prediction}</p>
-      )}
+        {/* ── Quick actions ── */}
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={() => router.push("/dashboard/log")}
+            className="glass-panel text-left p-5 rounded-md hover:bg-ash/50 hover:border-signal/30 group transition-all duration-300 shadow-lg relative overflow-hidden"
+          >
+            <div className="absolute top-4 right-4 text-fog/30 group-hover:text-signal transition-colors">
+              <PenLine className="w-5 h-5" />
+            </div>
+            <div className="text-sm font-semibold text-paper tracking-wide">
+              Log Today
+            </div>
+            <div className="text-[11px] text-fog mt-1 leading-normal">
+              Symptoms, mood, daily logs
+            </div>
+          </button>
 
-      {/* ── Quick actions ── */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => router.push("/dashboard/log")}
-          className="bg-ash rounded-md p-4 hover:bg-ash/80 transition-colors group text-left"
-        >
-          <div className="text-sm font-medium text-paper group-hover:text-signal transition-colors">
-            Log today
-          </div>
-          <div className="text-xs text-fog mt-1">
-            Mood, symptoms, notes
-          </div>
-        </button>
-        <button
-          onClick={() => router.push("/dashboard/cycle")}
-          className="bg-ash rounded-md p-4 hover:bg-ash/80 transition-colors group text-left"
-        >
-          <div className="text-sm font-medium text-paper group-hover:text-signal transition-colors">
-            Cycle view
-          </div>
-          <div className="text-xs text-fog mt-1">
-            History & patterns
-          </div>
-        </button>
-      </div>
+          <button
+            onClick={() => router.push("/dashboard/cycle")}
+            className="glass-panel text-left p-5 rounded-md hover:bg-ash/50 hover:border-signal/30 group transition-all duration-300 shadow-lg relative overflow-hidden"
+          >
+            <div className="absolute top-4 right-4 text-fog/30 group-hover:text-signal transition-colors">
+              <Calendar className="w-5 h-5" />
+            </div>
+            <div className="text-sm font-semibold text-paper tracking-wide">
+              Cycle View
+            </div>
+            <div className="text-[11px] text-fog mt-1 leading-normal">
+              Heatmap contributions & patterns
+            </div>
+          </button>
+        </div>
 
-      {/* ── AI Insight preview (placeholder for E2) ── */}
-      <div className="bg-ash rounded-md p-4 border-l-2 border-signal">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs font-mono text-signal uppercase tracking-wider">
-            RedDot.ai
+        {/* ── AI Insight preview ── */}
+        <div className="glass-panel rounded-md p-5 border-l-2 border-signal shadow-md relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-signal/5 to-transparent pointer-events-none" />
+          <div className="flex items-center gap-2 mb-2.5">
+            <Sparkles className="w-4 h-4 text-signal" />
+            <span className="text-[10px] font-mono text-signal uppercase tracking-wider">
+              RedDot.ai Engine
+            </span>
+          </div>
+          <p className="text-xs text-fog leading-relaxed">
+            Your logs are fully isolated. Start logging symptoms daily to prompt private recommendations & correlation insights.
+          </p>
+        </div>
+
+        {/* ── Last backup indicator ── */}
+        <div className="flex items-center justify-between text-[10px] text-fog/40 font-mono tracking-wider px-1">
+          <div className="flex items-center gap-1.5">
+            <Database className="w-3.5 h-3.5" />
+            <span>LAST BACKUP: {lastBackup.toUpperCase()}</span>
+          </div>
+          <span className="text-right">
+            {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}
           </span>
         </div>
-        <p className="text-sm text-fog leading-relaxed">
-          Start logging to get personalized insights about your cycle patterns.
-        </p>
-      </div>
 
-      {/* ── Last backup indicator (B5) ── */}
-      <div className="flex items-center justify-between text-xs text-fog/60">
-        <span>Last backup: {lastBackup}</span>
-        <span className="font-mono">
-          {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-        </span>
+        {/* ── Non-diagnostic disclaimer ── */}
+        <div className="flex justify-center gap-1.5 items-center text-[9px] text-fog/30 border-t border-white/5 pt-4">
+          <AlertCircle className="w-3 h-3 text-fog/20" />
+          <span>Non-diagnostic tool. Consult your physician for medical advice.</span>
+        </div>
       </div>
-
-      {/* ── Non-diagnostic disclaimer (visible per 08_AI_PROMPTS_AND_LOGIC.md) ── */}
-      <p className="text-[10px] text-fog/40 text-center">
-        RedDot is not a medical device and does not provide diagnoses.
-        Always consult a healthcare provider for medical advice.
-      </p>
     </div>
   );
 }

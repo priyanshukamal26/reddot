@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
@@ -20,13 +20,18 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // If already authenticated, redirect immediately
-  if (isAuthenticated) {
-    if (onboardingDone) {
-      router.replace("/dashboard");
-    } else {
-      router.replace("/onboarding");
+  // If already authenticated, redirect immediately via useEffect
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (onboardingDone) {
+        router.replace("/dashboard");
+      } else {
+        router.replace("/onboarding");
+      }
     }
+  }, [isAuthenticated, onboardingDone, router]);
+
+  if (isAuthenticated) {
     return null;
   }
 

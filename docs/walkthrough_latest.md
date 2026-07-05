@@ -1,5 +1,32 @@
 # RedDot — Build Walkthrough
 
+## Session 3: Aesthetic Overhaul (2026-07-05)
+
+### What was done
+
+**Delivered a premium, Awwwards-grade visual overhaul** across the pre-login marketing surface and the in-app dashboard per the v2 Design System (`docs/07_DESIGN_SYSTEM.md`).
+
+#### Added dependencies
+- `gsap` (ScrollTrigger, animation sequences, timeline choreography)
+- `lucide-react` (premium clean stroke icons)
+
+#### Stylesheets & layout
+- **`globals.css`**: Configured custom slow-floating keyframes for ambient blobs, custom scrollbars, a space-grid overlay utility, and glassmorphic panel styling.
+
+#### Rebuilt public landing page (`src/app/page.tsx`)
+- **Hero Section**: Massive bold typography, an animated vector PhaseRing drawing in on load, floating glowing gradients, and clear signal-red CTAs.
+- **Trust Boundary Section**: An interactive visual grid tracing user sandbox data, client-side encryption borders, and encrypted Postgres cloud storage.
+- **Cycle Spectrum**: Multi-column showcase of the monochrome red phase ramp (`phase-signal`, `phase-rise`, `phase-peak`, `phase-fade`).
+- **AI Simulator Panel**: Glassmorphic chatbot preview showing active turns and user prompt queries.
+
+#### Redesigned dashboard (`src/app/dashboard/page.tsx`)
+- Re-themed cards to use semi-transparent `glass-panel` backdrops with micro-borders.
+- Added glowing ambient spotlights and pulsing state indicators.
+- Upgraded quick-action blocks to use Lucide React icons (`PenLine`, `Calendar`) and hover transitions.
+- Styled metrics and prediction texts using precise monospace layouts.
+
+---
+
 ## Session 2: Data Flow Wiring (2026-07-05)
 
 ### What was done
@@ -27,18 +54,6 @@
 | [dashboard/log/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/log/page.tsx) | Saves real entries via `saveEntry()`, loads existing for editing, auto-creates Cycle on new period |
 | [dashboard/cycle/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/cycle/page.tsx) | Reads real entries via `loadAllEntries()` → transforms for heatmap, loads entry detail on click |
 
-#### Data flow architecture
-
-```
-Signup → password → PBKDF2(password, salt) → CryptoKey [in-memory only]
-
-Onboarding → Cycle + AppMeta → encrypt → IndexedDB
-Daily log  → DailyEntry      → encrypt → IndexedDB
-Dashboard  → IndexedDB → decrypt → calculateCycleStats() → PhaseRing
-Cycle view → IndexedDB → decrypt → heatmap + day detail
-Login      → loadMeta().salt → deriveKey() → resume session
-```
-
 ---
 
 ## Session 1: Initial Build (2026-07-04)
@@ -46,9 +61,6 @@ Login      → loadMeta().salt → deriveKey() → resume session
 ### What was done
 
 **Step 1: Full spec reading pass** — Read all 11 documentation files (00–10) in order. Verified comprehension of the two core differentiators (local-first encrypted architecture + RedDot.ai AI features), navigation model (pill nav: Tracking / RedDot.ai / Know + Profile popup), naming rule (RedDot for the product, RedDot.ai only for the AI feature), and the trust-boundary table.
-
-> [!NOTE]
-> `11_STITCH_PROMPT.md` referenced in the user's instructions doesn't exist — only 11 files (00–10) are present. No action needed.
 
 **Step 2: Created `project_track.md`** — Living build log at project root with all phases from 10_MVP_BUILD_PLAN.md, timestamped history, decisions log, and doc sync notes.
 
@@ -68,46 +80,7 @@ Login      → loadMeta().salt → deriveKey() → resume session
 | Profile popup | ✅ | [ProfilePopup.tsx](file:///c:/Projects/reddot/src/components/nav/ProfilePopup.tsx) |
 | App shell | ✅ | [AppShell.tsx](file:///c:/Projects/reddot/src/components/layout/AppShell.tsx) |
 | Auth context | ✅ | [auth-context.tsx](file:///c:/Projects/reddot/src/context/auth-context.tsx) — local-first auth via PBKDF2 |
-| Neon tables | ⬜ | Not yet created — needs Neon project |
-| Auth.js | ⬜ | Not yet wired — needs Neon connection string |
-
-**Phase 1 — Core Tracking (fully wired)**
-
-| Item | Status | Details |
-|------|--------|---------|
-| Onboarding | ✅ | [onboarding/page.tsx](file:///c:/Projects/reddot/src/app/onboarding/page.tsx) — 4-step flow, saves real data |
-| Dashboard | ✅ | [dashboard/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/page.tsx) — real PhaseRing + prediction |
-| Phase ring | ✅ | [PhaseRing.tsx](file:///c:/Projects/reddot/src/components/tracking/PhaseRing.tsx) — canvas gradient ring |
-| Daily log | ✅ | [dashboard/log/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/log/page.tsx) — real encrypted save + edit |
-| Cycle heatmap | ✅ | [CycleHeatmap.tsx](file:///c:/Projects/reddot/src/components/tracking/CycleHeatmap.tsx) — real entry data |
-| Day detail | ✅ | [DayDetail.tsx](file:///c:/Projects/reddot/src/components/tracking/DayDetail.tsx) — real entry display |
-| Cycle view page | ✅ | [dashboard/cycle/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/cycle/page.tsx) |
-| Insights tab | ⬜ | Not yet built |
-
-**Phase 2 — Privacy (partially built)**
-
-| Item | Status |
-|------|--------|
-| Privacy page (B7) | ✅ — [privacy/page.tsx](file:///c:/Projects/reddot/src/app/privacy/page.tsx) |
-| Export/Import | ⬜ |
-| Sync | ⬜ |
-| Password reset | ⬜ |
-
-**Phase 3 — AI (UI shell built)**
-
-| Item | Status |
-|------|--------|
-| Chat UI component | ✅ — [ChatPageContent.tsx](file:///c:/Projects/reddot/src/components/ai/ChatPageContent.tsx) |
-| Groq integration | ⬜ |
-| Chat history persistence | ⬜ |
-| Report analysis | ⬜ |
-
-**Auth pages**
-
-| Page | File |
-|------|------|
-| Login | [login/page.tsx](file:///c:/Projects/reddot/src/app/login/page.tsx) — wired to auth context |
-| Signup | [signup/page.tsx](file:///c:/Projects/reddot/src/app/signup/page.tsx) — wired to auth context |
+| Neon/Auth | ⬜ | Not yet created/wired |
 
 ### Build verification
 
@@ -124,11 +97,3 @@ Route (app)
 ├ ○ /privacy
 └ ○ /signup
 ```
-
-### What's next
-
-1. **Neon + Auth.js** — create Neon project, migrate tables, wire Auth.js credentials provider (needs connection string from user)
-2. **Groq API integration** — wire the chat endpoint with the exact system prompts from 08_AI_PROMPTS_AND_LOGIC.md, connect chat UI shell (needs API key)
-3. **Insights tab** — trend charts using Recharts within Tracking
-4. **Export/Import UI** — functions exist in data.ts, need button triggers
-5. **Landing page** — GSAP/Lenis scroll sequence (Phase 5, parallelizable)

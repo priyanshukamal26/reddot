@@ -8,7 +8,7 @@ is ever deleted from the History Log; mark things superseded, don't
 erase them.
 
 ## Current Status
-**Data flow wired end-to-end; Phases 0-1 substantially complete; Phase 2-3 UI shells built.** All core tracking screens now read/write real encrypted data through the data service → encryption layer → IndexedDB pipeline. Local-first auth (password → PBKDF2 key derivation → AES-GCM encryption) working via AuthContext. Full user journey operational: signup → onboarding (saves first cycle) → dashboard (real PhaseRing from cycle data) → daily log (real encrypted entries, edit support) → cycle heatmap (real entries) → day detail (real data). Remaining foundation: Neon tables + Auth.js integration (items 2-3). Phase 1 remaining: insights tab. Phase 3 UI shell (chat) built. Next: Neon/Auth, then Groq API integration.
+**Aesthetic overhaul complete; Data flow wired end-to-end; Phase 2-3 UI shells built.** Rebuilt the landing page (`/`) as an Awwwards-grade scrollytelling experience using GSAP ScrollTrigger timeline reveals, animated SVG drawing, floating blur blobs, and clean premium CTAs. Re-themed the post-login dashboard with high-fidelity dark-mode glassmorphic styling, Lucide icons, pulsing outer glows, and clean font hierarchies per the `07_DESIGN_SYSTEM.md` spec. Core data pipeline is fully intact. Remaining foundation: Neon tables + Auth.js integration (items 2-3). Next: Neon/Auth, then Groq AI.
 
 ## Build Plan (mirrors 10_MVP_BUILD_PLAN.md — keep in sync with it)
 
@@ -72,6 +72,8 @@ erase them.
 
 ## History Log (append-only, most recent at the top)
 
+[2026-07-05 22:05] — **Aesthetic Overhaul & Premium Redesign.** Rebuilt the main landing page (`src/app/page.tsx`) to deliver an Awwwards-grade experience featuring GSAP ScrollTrigger timeline reveals, animated SVG drawing, floating gradient blurs, interactive trust-boundary card graphics, and a mock AI chat assistant preview. Re-themed the dashboard (`src/app/dashboard/page.tsx`) using dark-mode glassmorphism (`glass-panel`), glowing ambient highlights, Lucide React icons, and a highly polished UI. Added `gsap` and `lucide-react` to dependencies, and configured `globals.css` with ambient float animations and layout grid overlays. Fixed a React render-phase state update warning in `LoginPage` by wrapping its authentication redirect check inside a `useEffect` hook. All routes build clean with 0 TypeScript errors.
+
 [2026-07-05 21:25] — **Data flow wired end-to-end.** Created AuthContext provider (local-first password → PBKDF2 key derivation, key in React context), Providers wrapper, AuthGuard route protection, dashboard layout (AuthGuard + AppShell). Wired signup → auth context signup() → derive key + save salt to IndexedDB → redirect to onboarding. Wired onboarding → save first Cycle record + mark onboarding_done in meta → dashboard. Wired dashboard → loadAllCycles() → calculateCycleStats() → getCurrentPhase() → real PhaseRing + predictNextPeriod(). Wired daily log → saveEntry() (encrypt → IndexedDB) + loadEntryByDate() for edit mode + auto Cycle creation on new period start. Wired cycle view → loadAllEntries() → real heatmap data + loadEntryByDate() for day detail. Wired login → loadMeta() for salt → deriveKey() → redirect. All 9 routes build clean (zero TS errors). New files: src/context/auth-context.tsx, src/app/providers.tsx, src/components/auth/AuthGuard.tsx, src/app/dashboard/layout.tsx. Modified: layout.tsx, signup, login, onboarding, dashboard, daily log, cycle view.
 
 [2026-07-04 17:35] — Phase 1 UI screens built: onboarding flow (4-step wizard with privacy intro, cycle basics with irregular option, sync choice, completion), dashboard with PhaseRing + quick actions + AI insight preview + backup indicator + disclaimer, daily log screen (period/flow/symptoms/mood/scales/journal — targets <15s logging), creative heatmap cycle view (GitHub-contribution-style with monochrome red ramp, demo data for 6 months), day detail slide-up panel. Auth pages: login + signup with mandatory encryption-key acknowledgment checkbox. Privacy page (B7) with all mandatory disclaimers from 09_SECURITY_AND_PRIVACY.md placed. RedDot.ai chat UI shell component (past-chats sidebar, message list, suggested prompts, persistent disclaimer). All 8 routes build clean. Next: wire data flow, insights tab, then Neon/Auth.
@@ -84,4 +86,5 @@ erase them.
 
 ## Doc Sync Notes
 
+[2026-07-05 22:05] — Updated `docs/walkthrough_latest.md`: documented the aesthetic overhaul, GSAP scrollytelling sequences, ambient blurs, and glassmorphic dashboards.
 [2026-07-05 21:36] — Updated `docs/walkthrough_latest.md`: added Session 2 (data flow wiring) details, updated all status tables to reflect wired state, preserved Session 1 content.

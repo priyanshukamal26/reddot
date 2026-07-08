@@ -56,8 +56,26 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-void flex items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-8">
+    <main className="min-h-screen bg-void flex flex-col justify-center items-center px-4 relative pt-16">
+      {/* ── Fixed Header ── */}
+      <nav className="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-signal animate-pulse" />
+          <Link href="/" className="font-display text-xl font-bold tracking-tight uppercase text-paper">
+            Red<span className="text-signal">Dot</span>
+          </Link>
+        </div>
+        <div className="flex items-center gap-6">
+          <Link href="/privacy" className="text-xs text-fog hover:text-paper transition-colors tracking-wider uppercase font-mono">
+            Privacy Model
+          </Link>
+          <Link href="/signup" className="px-4 py-2 bg-signal text-paper font-semibold hover:bg-signal-deep text-xs rounded transition-all uppercase tracking-wider font-mono">
+            Sign Up
+          </Link>
+        </div>
+      </nav>
+
+      <div className="w-full max-w-sm space-y-8 my-auto">
         {/* Logo */}
         <div className="text-center">
           <h1 className="text-4xl font-bold tracking-tight text-paper">

@@ -1,18 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
-import { exportData, importData, forcePushSync } from "@/lib/data";
-import { ArrowLeft, Download, Upload, Cloud, RefreshCw, KeyRound, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { exportData, importData, forcePushSync, saveEntry, saveCycle } from "@/lib/data";
+import { clearAllData } from "@/lib/db";
+import { SYMPTOM_OPTIONS } from "@/lib/types";
+import { ArrowLeft, Download, Upload, Cloud, RefreshCw, KeyRound, AlertTriangle, CheckCircle2, Trash2, Sparkles } from "lucide-react";
 
 export default function SettingsPage() {
-  const { meta, refreshMeta } = useAuth();
+  const router = useRouter();
+  const { meta, refreshMeta, logout } = useAuth();
   const [syncLoading, setSyncLoading] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
+  const [wipeConfirm, setWipeConfirm] = useState("");
+  const [wipeLoading, setWipeLoading] = useState(false);
+  const [seedLoading, setSeedLoading] = useState(false);
 
   // Format backup date
   const lastBackupDate = meta?.last_export_at
@@ -128,6 +135,170 @@ export default function SettingsPage() {
       }
     };
     reader.readAsText(file);
+  };
+
+  const handlePanicWipe = async () => {
+    if (wipeConfirm !== "WIPE") return;
+    setWipeLoading(true);
+    setMessage("");
+    setIsError(false);
+
+    try {
+      // 1. Call server to delete synced blobs & reset user_meta
+      const res = await fetch("/api/user/wipe", {
+        method: "POST",
+      });
+      if (!res.ok) {
+        throw new Error("Failed to delete cloud data.");
+      }
+
+      // 2. Clear local IndexedDB databases
+      await clearAllData();
+
+      setMessage("All local and synced data wiped successfully. Logging out...");
+      
+      // 3. Clear auth context state and session, then redirect
+      setTimeout(() => {
+        logout();
+        router.replace("/login");
+      }, 2000);
+    } catch (err) {
+      console.error(err);
+      setIsError(true);
+      setMessage("Failed to complete panic wipe. Network/Server error.");
+      setWipeLoading(false);
+    }
+  };
+
+  const handleSeedDemoData = async () => {
+    setSeedLoading(true);
+    setMessage("");
+    setIsError(false);
+
+    try {
+      const previousSync = meta?.sync_enabled || false;
+      const previousSalt = meta?.salt || "";
+
+      // 1. Clear IndexedDB
+      await clearAllData();
+
+      // 2. Generate 4 cycles starting at 28-day intervals: 84 days ago, 56 days ago, 28 days ago, today
+      const startOffsetDays = [84, 56, 28, 0];
+      for (const offset of startOffsetDays) {
+        const cycleDate = new Date();
+        cycleDate.setDate(cycleDate.getDate() - offset);
+        const cycleDateStr = cycleDate.toISOString().split("T")[0];
+        await saveCycle({
+          cycleId: Math.random().toString(36).substring(7),
+          startDate: cycleDateStr,
+        });
+      }
+
+      // 3. Generate 90 daily entries
+      for (let i = 90; i >= 0; i--) {
+        const logDate = new Date();
+        logDate.setDate(logDate.getDate() - i);
+        const dateStr = logDate.toISOString().split("T")[0];
+
+        const daysSinceStart = 90 - i;
+        const cycleDayIndex = daysSinceStart >= 0 ? daysSinceStart % 28 : (28 + (daysSinceStart % 28)) % 28;
+
+        let periodFlag = false;
+        let flowIntensity: "spotting" | "light" | "medium" | "heavy" | undefined = undefined;
+        const symptoms: string[] = [];
+        let mood = 3;
+        let sleep = 3;
+        let energy = 3;
+        let appetite = 3;
+        let exercise = 3;
+
+        if (cycleDayIndex < 5) {
+          periodFlag = true;
+          if (cycleDayIndex === 0 || cycleDayIndex === 1) {
+            flowIntensity = "heavy";
+            if (Math.random() < 0.8) symptoms.push("cramps");
+            if (Math.random() < 0.6) symptoms.push("bloating");
+            mood = 2;
+            energy = 2;
+            sleep = 2;
+          } else if (cycleDayIndex === 2 || cycleDayIndex === 3) {
+            flowIntensity = "medium";
+            if (Math.random() < 0.6) symptoms.push("cramps");
+            mood = 3;
+            energy = 3;
+            sleep = 3;
+          } else {
+            flowIntensity = "light";
+            mood = 3;
+            energy = 3;
+          }
+        } else if (cycleDayIndex >= 5 && cycleDayIndex < 12) {
+          periodFlag = false;
+          mood = Math.random() < 0.5 ? 4 : 5;
+          energy = Math.random() < 0.5 ? 4 : 5;
+          sleep = 4;
+          if (Math.random() < 0.1) symptoms.push("fatigue");
+        } else if (cycleDayIndex >= 12 && cycleDayIndex < 16) {
+          periodFlag = false;
+          mood = 5;
+          energy = 5;
+          sleep = 5;
+          if (Math.random() < 0.2) symptoms.push("spotting");
+          if (Math.random() < 0.2) symptoms.push("headache");
+        } else {
+          periodFlag = false;
+          mood = Math.random() < 0.6 ? 3 : 2;
+          energy = Math.random() < 0.5 ? 3 : 4;
+          sleep = 3;
+          if (Math.random() < 0.4) symptoms.push("acne");
+          if (Math.random() < 0.4) symptoms.push("breast tenderness");
+          if (Math.random() < 0.5) symptoms.push("cravings");
+          if (Math.random() < 0.3) symptoms.push("irritability");
+        }
+
+        appetite = Math.floor(Math.random() * 3) + 3;
+        exercise = Math.floor(Math.random() * 4) + 2;
+
+        await saveEntry({
+          entryId: Math.random().toString(36).substring(7),
+          date: dateStr,
+          periodFlag,
+          flowIntensity,
+          symptoms,
+          mood,
+          sleep,
+          energy,
+          appetite,
+          exercise,
+        });
+      }
+
+      // 4. Save metadata back
+      const { putMeta } = await import("@/lib/db");
+      await putMeta({
+        last_export_at: meta?.last_export_at || null,
+        sync_enabled: previousSync,
+        onboarding_done: true,
+        salt: previousSalt,
+      });
+
+      // 5. Cloud sync push if sync was previously active
+      if (previousSync) {
+        await forcePushSync();
+      }
+
+      await refreshMeta();
+      setMessage("90-day cyclic demo data generated successfully! Reloading dashboard...");
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1500);
+    } catch (err) {
+      console.error("Demo seeding failed:", err);
+      setIsError(true);
+      setMessage("Failed to seed demo data.");
+    } finally {
+      setSeedLoading(false);
+    }
   };
 
   return (
@@ -283,6 +454,70 @@ export default function SettingsPage() {
                 <span>Sync Now</span>
               </button>
             )}
+          </div>
+        </div>
+
+        {/* ── Section 3.5: Seed Demo Data ── */}
+        <div className="glass-panel rounded-lg p-5 space-y-4 shadow-md">
+          <div className="flex items-center gap-2 pb-2 border-b border-fog/5">
+            <Sparkles className="w-4 h-4 text-signal" />
+            <h2 className="text-xs font-semibold text-paper uppercase tracking-wider font-mono">
+              Developer Tools — Seeding
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs leading-relaxed text-fog">
+              Populate the local database with 90 days of realistic cyclic cycle history (period bleeding, moods, symptoms, and sleep scales). This is extremely useful for exploring trend charts, contributions, and AI insights.
+              <strong className="text-signal"> Note: This will clear all existing logs before seeding.</strong>
+            </p>
+
+            <button
+              onClick={handleSeedDemoData}
+              disabled={seedLoading}
+              className="w-full py-2.5 rounded bg-ash hover:bg-ash/80 border border-signal/20 hover:border-signal/40 text-paper font-semibold transition-all text-xs uppercase tracking-wider font-mono"
+            >
+              {seedLoading ? "Seeding 90-Day History..." : "Seed 90-Day Cyclic Demo Data"}
+            </button>
+          </div>
+        </div>
+
+        {/* ── Section 4: Danger Zone / Panic Wipe ── */}
+        <div className="glass-panel rounded-lg p-5 space-y-4 border border-error/20 bg-error/5 shadow-md">
+          <div className="flex items-center gap-2 pb-2 border-b border-error/10">
+            <Trash2 className="w-4 h-4 text-error" />
+            <h2 className="text-xs font-semibold text-error uppercase tracking-wider font-mono">
+              Danger Zone — Panic Wipe
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-xs leading-relaxed text-fog">
+              Wiping your data will permanently delete all local logs, cycle entries, and chats from this browser. 
+              If cloud sync is enabled, it will also delete all ciphertext blobs from our servers. 
+              <strong className="text-paper"> This action is irreversible.</strong>
+            </p>
+
+            <div className="space-y-3 pt-2">
+              <label className="block text-[10px] text-fog font-mono uppercase tracking-wider">
+                Type &quot;WIPE&quot; to confirm:
+              </label>
+              <input
+                type="text"
+                value={wipeConfirm}
+                onChange={(e) => setWipeConfirm(e.target.value)}
+                placeholder="WIPE"
+                className="w-full bg-void text-paper border border-error/20 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:border-error text-center font-mono"
+              />
+              
+              <button
+                onClick={handlePanicWipe}
+                disabled={wipeConfirm !== "WIPE" || wipeLoading}
+                className="w-full py-2.5 rounded bg-error text-paper font-semibold hover:bg-error/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-xs uppercase tracking-wider font-mono"
+              >
+                {wipeLoading ? "Wiping Data..." : "Wipe All Local & Cloud Data"}
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
 import type { Chat, ChatMessage } from "@/lib/types";
 
 // ──────────────────────────────────────────────
@@ -141,12 +142,12 @@ export default function ChatPageContent({
             <button className="px-3 py-1 text-xs font-medium text-paper bg-signal/10 rounded-md">
               Chat
             </button>
-            <a
+            <Link
               href="/dashboard/report"
               className="px-3 py-1 text-xs font-medium text-fog hover:text-paper rounded-md transition-colors"
             >
               Reports
-            </a>
+            </Link>
           </div>
         </div>
 

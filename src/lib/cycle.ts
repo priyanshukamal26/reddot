@@ -9,7 +9,7 @@
  * - Next period prediction (with confidence)
  */
 
-import type { Cycle, CurrentPhase, CyclePhase, PredictionConfidence } from "./types";
+import type { Cycle, CurrentPhase, CyclePhase, PredictionConfidence, DailyEntry } from "./types";
 
 // ──────────────────────────────────────────────
 // Constants
@@ -190,4 +190,54 @@ export function daysUntil(target: Date, from: Date = new Date()): number {
   return Math.ceil(
     (target.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)
   );
+}
+
+/**
+ * Calculate consecutive daily logging streak.
+ */
+export function calculateLoggingStreak(entries: DailyEntry[]): number {
+  if (entries.length === 0) return 0;
+
+  // Get unique sorted dates in descending order (most recent first)
+  const uniqueDates = Array.from(new Set(entries.map((e) => e.date)))
+    .map((d) => new Date(d))
+    .sort((a, b) => b.getTime() - a.getTime());
+
+  if (uniqueDates.length === 0) return 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const mostRecent = uniqueDates[0];
+  mostRecent.setHours(0, 0, 0, 0);
+
+  // If the most recent log is older than yesterday, the streak is broken (0)
+  if (mostRecent < yesterday) {
+    return 0;
+  }
+
+  let streak = 1;
+  let currentExpected = new Date(mostRecent);
+
+  for (let i = 1; i < uniqueDates.length; i++) {
+    const prevDate = new Date(uniqueDates[i]);
+    prevDate.setHours(0, 0, 0, 0);
+
+    const expectedPrev = new Date(currentExpected);
+    expectedPrev.setDate(expectedPrev.getDate() - 1);
+
+    if (prevDate.getTime() === expectedPrev.getTime()) {
+      streak++;
+      currentExpected = prevDate;
+    } else if (prevDate > expectedPrev) {
+      continue;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
 }

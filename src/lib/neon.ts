@@ -190,6 +190,60 @@ async function mockSql(strings: TemplateStringsArray | string[], ...values: any[
     return [];
   }
 
+  // 10b. UPDATE users SET password_hash = ? WHERE id = ?
+  if (queryText.includes("UPDATE users SET password_hash = ? WHERE id = ?")) {
+    const passwordHash = values[0];
+    const userId = values[1];
+    const userIdx = db.users.findIndex((u: any) => u.id === userId);
+    if (userIdx >= 0) {
+      db.users[userIdx].password_hash = passwordHash;
+      writeMockDb(db);
+    }
+    return [];
+  }
+
+  // 10c. UPDATE user_meta SET salt = ? WHERE user_id = ?
+  if (queryText.includes("UPDATE user_meta SET salt = ? WHERE user_id = ?")) {
+    const salt = values[0];
+    const userId = values[1];
+    const metaIdx = db.user_meta.findIndex((m: any) => m.user_id === userId);
+    if (metaIdx >= 0) {
+      db.user_meta[metaIdx].salt = salt;
+      writeMockDb(db);
+    }
+    return [];
+  }
+
+  // 10d. DELETE FROM encrypted_blobs WHERE user_id = ?
+  if (queryText.includes("DELETE FROM encrypted_blobs WHERE user_id = ?")) {
+    const userId = values[0];
+    db.encrypted_blobs = db.encrypted_blobs.filter((b: any) => b.user_id !== userId);
+    writeMockDb(db);
+    return [];
+  }
+
+  // 10e. DELETE FROM report_analysis_events WHERE user_id = ?
+  if (queryText.includes("DELETE FROM report_analysis_events WHERE user_id = ?")) {
+    const userId = values[0];
+    db.report_analysis_events = db.report_analysis_events.filter((e: any) => e.user_id !== userId);
+    writeMockDb(db);
+    return [];
+  }
+
+  // 10f. UPDATE user_meta SET onboarding_done = ?, last_export_at = ? WHERE user_id = ?
+  if (queryText.includes("UPDATE user_meta SET") && queryText.includes("onboarding_done =") && queryText.includes("last_export_at =") && queryText.includes("user_id = ?")) {
+    const onboarding = values[0];
+    const lastExport = values[1];
+    const userId = values[2];
+    const metaIdx = db.user_meta.findIndex((m: any) => m.user_id === userId);
+    if (metaIdx >= 0) {
+      db.user_meta[metaIdx].onboarding_done = onboarding;
+      db.user_meta[metaIdx].last_export_at = lastExport;
+      writeMockDb(db);
+    }
+    return [];
+  }
+
   // 11. INSERT INTO report_analysis_events
   if (queryText.includes("INSERT INTO report_analysis_events")) {
     const userId = values[0];

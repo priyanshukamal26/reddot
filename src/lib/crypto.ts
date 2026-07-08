@@ -92,7 +92,23 @@ export async function deriveKey(
     },
     baseKey,
     { name: "AES-GCM", length: KEY_LENGTH },
-    false, // not extractable — the key stays in the crypto subsystem
+    true, // extractable — needed to persist key in sessionStorage across tab refreshes
+    ["encrypt", "decrypt"]
+  );
+}
+
+export async function exportKeyToBase64(key: CryptoKey): Promise<string> {
+  const exported = await crypto.subtle.exportKey("raw", key);
+  return arrayBufferToBase64(exported);
+}
+
+export async function importKeyFromBase64(base64: string): Promise<CryptoKey> {
+  const rawKey = base64ToArrayBuffer(base64);
+  return crypto.subtle.importKey(
+    "raw",
+    rawKey,
+    "AES-GCM",
+    true,
     ["encrypt", "decrypt"]
   );
 }

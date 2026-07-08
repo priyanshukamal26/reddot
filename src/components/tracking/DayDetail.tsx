@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import type { DailyEntry } from "@/lib/types";
 
 // ──────────────────────────────────────────────
@@ -34,6 +35,7 @@ const SCALE_NAMES: Record<string, string> = {
 };
 
 export default function DayDetail({ isOpen, onClose, entry, date }: DayDetailProps) {
+  const router = useRouter();
   const panelRef = useRef<HTMLDivElement>(null);
 
   // Close on Escape
@@ -94,7 +96,15 @@ export default function DayDetail({ isOpen, onClose, entry, date }: DayDetailPro
           </div>
 
           {!entry ? (
-            <p className="text-fog text-sm py-4">No data logged for this day.</p>
+            <div className="space-y-4 py-2">
+              <p className="text-fog text-sm">No data logged for this day.</p>
+              <button
+                onClick={() => router.push(`/dashboard/log?date=${date}`)}
+                className="w-full py-2.5 bg-signal text-paper font-semibold hover:bg-signal-deep text-xs rounded transition-colors uppercase tracking-wider font-mono"
+              >
+                Log this Day
+              </button>
+            </div>
           ) : (
             <>
               {/* ── Period ── */}
@@ -178,6 +188,12 @@ export default function DayDetail({ isOpen, onClose, entry, date }: DayDetailPro
                   </p>
                 </div>
               )}
+              <button
+                onClick={() => router.push(`/dashboard/log?date=${date}`)}
+                className="w-full py-2.5 bg-void border border-white/10 hover:border-signal/40 text-paper font-semibold hover:bg-ash/50 text-xs rounded transition-all uppercase tracking-wider font-mono mt-4"
+              >
+                Edit Log Entry
+              </button>
             </>
           )}
         </div>

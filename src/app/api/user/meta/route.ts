@@ -11,7 +11,7 @@ export async function GET() {
 
     const sql = getSql();
     const result = (await sql`
-      SELECT m.onboarding_done, m.sync_enabled, m.last_export_at, m.salt, u.email
+      SELECT m.onboarding_done, u.sync_enabled, m.last_export_at, m.salt, u.email
       FROM user_meta m
       JOIN users u ON m.user_id = u.id
       WHERE m.user_id = ${session.user.id} LIMIT 1

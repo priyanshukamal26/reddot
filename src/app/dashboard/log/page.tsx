@@ -67,6 +67,17 @@ export default function DailyLogPage() {
   const [saved, setSaved] = useState(false);
   const [loadingEntry, setLoadingEntry] = useState(true);
 
+  // Load date from URL parameter on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const dateParam = params.get("date");
+      if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+        setDate(dateParam);
+      }
+    }
+  }, []);
+
   // Load existing entry when date changes
   useEffect(() => {
     async function loadExisting() {
@@ -126,6 +137,51 @@ export default function DailyLogPage() {
       [key]: prev[key] === value ? undefined : value,
     }));
   }, []);
+
+  const handleAutofill = () => {
+    const isPeriod = Math.random() < 0.3;
+    setPeriodFlag(isPeriod);
+
+    if (isPeriod) {
+      const intensities: FlowIntensity[] = ["spotting", "light", "medium", "heavy"];
+      setFlowIntensity(intensities[Math.floor(Math.random() * intensities.length)]);
+    } else {
+      setFlowIntensity(undefined);
+    }
+
+    const availableSymptoms = [...SYMPTOM_OPTIONS];
+    const numSymptoms = Math.floor(Math.random() * 4);
+    const selected: string[] = [];
+    for (let i = 0; i < numSymptoms; i++) {
+      const idx = Math.floor(Math.random() * availableSymptoms.length);
+      const sym = availableSymptoms.splice(idx, 1)[0];
+      if (sym) selected.push(sym);
+    }
+    setSelectedSymptoms(selected);
+
+    setMood(Math.floor(Math.random() * 5) + 1);
+    setScales({
+      sleep: Math.floor(Math.random() * 5) + 1,
+      energy: Math.floor(Math.random() * 5) + 1,
+      appetite: Math.floor(Math.random() * 5) + 1,
+      exercise: Math.floor(Math.random() * 5) + 1,
+    });
+
+    if (Math.random() < 0.25) {
+      const journals = [
+        "Felt a bit tired in the afternoon.",
+        "Had a good workout session today. Energy felt great.",
+        "Slept early. Woke up refreshed.",
+        "Experiencing mild bloating and cravings today.",
+        "Overall productive day, stayed hydrated.",
+      ];
+      setJournalText(journals[Math.floor(Math.random() * journals.length)]);
+      setJournalExpanded(true);
+    } else {
+      setJournalText("");
+      setJournalExpanded(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -314,18 +370,26 @@ export default function DailyLogPage() {
             )}
           </div>
 
-          {/* ── Save button ── */}
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className={`w-full py-3 rounded-md font-medium transition-colors ${
-              saved
-                ? "bg-green-700 text-paper"
-                : "bg-signal text-paper hover:bg-signal-deep disabled:opacity-40"
-            }`}
-          >
-            {saved ? "✓ Saved" : saving ? "Saving..." : entryId ? "Update entry" : "Save entry"}
-          </button>
+          {/* ── Actions ── */}
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={handleAutofill}
+              className="col-span-1 py-3 rounded-md font-medium text-xs border border-white/10 hover:border-signal/40 bg-void hover:bg-ash/50 text-fog hover:text-paper uppercase tracking-wider font-mono transition-all"
+            >
+              Autofill
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className={`col-span-2 py-3 rounded-md font-medium transition-colors ${
+                saved
+                  ? "bg-green-700 text-paper"
+                  : "bg-signal text-paper hover:bg-signal-deep disabled:opacity-40"
+              }`}
+            >
+              {saved ? "✓ Saved" : saving ? "Saving..." : entryId ? "Update entry" : "Save entry"}
+            </button>
+          </div>
         </>
       )}
     </div>

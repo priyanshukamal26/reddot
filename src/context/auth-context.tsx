@@ -25,7 +25,7 @@ import {
   type ReactNode,
 } from "react";
 import { signIn as nextAuthSignIn, signOut as nextAuthSignOut } from "next-auth/react";
-import { deriveKey, generateSalt } from "@/lib/crypto";
+import { deriveKey, generateSalt, exportKeyToBase64, importKeyFromBase64 } from "@/lib/crypto";
 import { setEncryptionKey, clearEncryptionKey, loadMeta, saveMeta } from "@/lib/data";
 import type { AppMeta } from "@/lib/types";
 
@@ -87,6 +87,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setOnboardingDone(existingMeta.onboarding_done);
         }
 
+        // Restore key from sessionStorage if present to keep user authenticated on refresh
+        if (typeof window !== "undefined") {
+          const sessionKeyBase64 = sessionStorage.getItem("reddot_encryption_key");
+          if (sessionKeyBase64) {
+            const importedKey = await importKeyFromBase64(sessionKeyBase64);
+            setEncryptionKey(importedKey);
+            setIsAuthenticated(true);
+          }
+        }
+
         // Fetch NextAuth session info from server
         const res = await fetch("/api/user/meta");
         if (res.ok) {
@@ -122,6 +132,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 2. Derive key client-side and set in memory
     const key = await deriveKey(password, salt);
     setEncryptionKey(key);
+    if (typeof window !== "undefined") {
+      const keyBase64 = await exportKeyToBase64(key);
+      sessionStorage.setItem("reddot_encryption_key", keyBase64);
+    }
 
     // Clear local IndexedDB databases if switching users to prevent data leakage/corruption
     if (typeof window !== "undefined") {
@@ -183,6 +197,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 2. Derive key in memory client-side
     const key = await deriveKey(password, salt);
     setEncryptionKey(key);
+    if (typeof window !== "undefined") {
+      const keyBase64 = await exportKeyToBase64(key);
+      sessionStorage.setItem("reddot_encryption_key", keyBase64);
+    }
 
     // Clear local IndexedDB databases if switching users to prevent data leakage/corruption
     if (typeof window !== "undefined") {
@@ -253,6 +271,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     clearEncryptionKey();
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("reddot_encryption_key");
+    }
     setIsAuthenticated(false);
     setOnboardingDone(false);
     setMeta(null);

@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Sparkles, Smile, Bed, Dumbbell, CalendarRange, HeartPulse } from "lucide-react";
-import { loadAllEntries } from "@/lib/data";
-import type { DailyEntry } from "@/lib/types";
+import { ArrowLeft, Sparkles, Smile, Bed, Dumbbell, CalendarRange, HeartPulse, Heart, Activity, AlertTriangle } from "lucide-react";
+import { loadAllEntries, loadAllCycles } from "@/lib/data";
+import { calculateCycleStats, getCurrentPhase } from "@/lib/cycle";
+import type { DailyEntry, Cycle } from "@/lib/types";
 import {
   LineChart,
   Line,
@@ -43,6 +44,9 @@ export default function InsightsPage() {
     avgSleep: 0,
     totalLogs: 0,
   });
+  const [insights, setInsights] = useState<string[]>([]);
+  const [flags, setFlags] = useState<string[]>([]);
+  const [hasEnoughData, setHasEnoughData] = useState(false);
 
   // Client-side mount check to prevent Recharts hydration issues in Next.js
   useEffect(() => {
@@ -109,6 +113,145 @@ export default function InsightsPage() {
           avgSleep: sleepCount > 0 ? parseFloat((sleepSum / sleepCount).toFixed(1)) : 0,
           totalLogs: entries.length,
         });
+
+        // 3. Phase correlations and Care prompts (D4 / G1)
+        const cycles = await loadAllCycles();
+        const hasData = cycles.length >= 2;
+        setHasEnoughData(hasData);
+
+        if (hasData) {
+          const stats = calculateCycleStats(cycles);
+          const detectedInsights: string[] = [];
+          const detectedFlags: string[] = [];
+
+          // Sort cycles ascending
+          const sortedCycles = [...cycles].sort(
+            (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+          );
+
+          const phaseEntries: Record<string, DailyEntry[]> = {
+            menstrual: [],
+            follicular: [],
+            ovulation: [],
+            luteal: [],
+          };
+
+          sortedEntries.forEach((entry) => {
+            const entryDate = new Date(entry.date);
+            const cycle = sortedCycles.find((c, idx) => {
+              const start = new Date(c.startDate);
+              const nextStart = sortedCycles[idx + 1] ? new Date(sortedCycles[idx + 1].startDate) : null;
+              return entryDate >= start && (!nextStart || entryDate < nextStart);
+            });
+
+            if (cycle) {
+              const currentPhase = getCurrentPhase(cycle.startDate, stats, entryDate);
+              if (phaseEntries[currentPhase.phase]) {
+                phaseEntries[currentPhase.phase].push(entry);
+              }
+            }
+          });
+
+          // Energy & Mood calculations
+          let overallMoodSum = 0;
+          let overallMoodCount = 0;
+          let overallEnergySum = 0;
+          let overallEnergyCount = 0;
+
+          const phaseStats: Record<string, { moodSum: number; moodCount: number; energySum: number; energyCount: number }> = {
+            menstrual: { moodSum: 0, moodCount: 0, energySum: 0, energyCount: 0 },
+            follicular: { moodSum: 0, moodCount: 0, energySum: 0, energyCount: 0 },
+            ovulation: { moodSum: 0, moodCount: 0, energySum: 0, energyCount: 0 },
+            luteal: { moodSum: 0, moodCount: 0, energySum: 0, energyCount: 0 },
+          };
+
+          Object.entries(phaseEntries).forEach(([phaseName, entriesList]) => {
+            entriesList.forEach((e) => {
+              if (e.mood !== undefined) {
+                overallMoodSum += e.mood;
+                overallMoodCount++;
+                phaseStats[phaseName].moodSum += e.mood;
+                phaseStats[phaseName].moodCount++;
+              }
+              if (e.energy !== undefined) {
+                overallEnergySum += e.energy;
+                overallEnergyCount++;
+                phaseStats[phaseName].energySum += e.energy;
+                phaseStats[phaseName].energyCount++;
+              }
+            });
+          });
+
+          const avgOverallMood = overallMoodCount > 0 ? overallMoodSum / overallMoodCount : 0;
+          const avgOverallEnergy = overallEnergyCount > 0 ? overallEnergySum / overallEnergyCount : 0;
+
+          Object.entries(phaseStats).forEach(([phaseName, statsVal]) => {
+            const phaseAvgMood = statsVal.moodCount > 0 ? statsVal.moodSum / statsVal.moodCount : 0;
+            const phaseAvgEnergy = statsVal.energyCount > 0 ? statsVal.energySum / statsVal.energyCount : 0;
+
+            if (statsVal.moodCount >= 2 && avgOverallMood > 0) {
+              const diff = avgOverallMood - phaseAvgMood;
+              if (diff >= 0.4) {
+                detectedInsights.push(
+                  `Your mood ratings tend to drop during your ${phaseName} phase (averaging ${phaseAvgMood.toFixed(1)}/5 compared to your overall average of ${avgOverallMood.toFixed(1)}/5).`
+                );
+              }
+            }
+
+            if (statsVal.energyCount >= 2 && avgOverallEnergy > 0) {
+              const diff = avgOverallEnergy - phaseAvgEnergy;
+              if (diff >= 0.4) {
+                detectedInsights.push(
+                  `You report lower energy levels during your ${phaseName} phase (averaging ${phaseAvgEnergy.toFixed(1)}/5 vs your cycle-wide average of ${avgOverallEnergy.toFixed(1)}/5).`
+                );
+              }
+            }
+          });
+
+          // Check consecutive symptom flags
+          let heavyBleedingCount = 0;
+          let crampsCount = 0;
+
+          const recentCycles = sortedCycles.slice(-3);
+          recentCycles.forEach((cycle) => {
+            const start = new Date(cycle.startDate);
+            const cycleEnd = new Date(start);
+            cycleEnd.setDate(cycleEnd.getDate() + (stats?.averageLength || 28));
+
+            const cycleEntries = sortedEntries.filter((e) => {
+              const d = new Date(e.date);
+              return d >= start && d <= cycleEnd;
+            });
+
+            const hasHeavy = cycleEntries.some((e) => e.flowIntensity === "heavy");
+            if (hasHeavy) heavyBleedingCount++;
+
+            const hasCramps = cycleEntries.some((e) => e.symptoms?.includes("cramps"));
+            if (hasCramps) crampsCount++;
+          });
+
+          if (recentCycles.length >= 3) {
+            if (heavyBleedingCount >= 3) {
+              detectedFlags.push(
+                "You have logged heavy flow for 3 consecutive cycles. Consider discussing this with your healthcare provider at your next visit."
+              );
+            }
+            if (crampsCount >= 3) {
+              detectedFlags.push(
+                "Cramps have been logged for 3 consecutive cycles. If this pattern is causing notable discomfort, it may be helpful to consult a doctor."
+              );
+            }
+          }
+
+          if (detectedInsights.length === 0) {
+            detectedInsights.push(
+              "Your logs show stable wellness factors across all phases. Keep tracking daily to refine pattern detection."
+            );
+          }
+
+          setInsights(detectedInsights);
+          setFlags(detectedFlags);
+        }
       } catch (err) {
         console.error("Failed to load insights data:", err);
       } finally {
@@ -325,6 +468,46 @@ export default function InsightsPage() {
                   <Bar dataKey="count" fill="#ff2a5f" radius={[3, 3, 0, 0]} maxBarSize={30} />
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+
+        {/* ── Section 3: Phase Correlations & Care Prompts ── */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-signal" />
+            <h2 className="text-xs font-semibold text-paper uppercase tracking-wider font-mono">
+              Wellness Patterns & Care Prompts
+            </h2>
+          </div>
+
+          {!hasEnoughData ? (
+            <div className="glass-panel p-5 rounded-md text-center text-xs text-fog/60 leading-relaxed font-mono">
+              Not enough cycle history yet to detect correlations. Keep tracking daily to automatically surface patterns across cycles (requires 2+ cycles).
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {/* Care Flags */}
+              {flags.map((flag, idx) => (
+                <div key={idx} className="glass-panel rounded-md p-4 flex gap-3 border-l-2 border-error bg-error/5 shadow-md">
+                  <AlertTriangle className="w-5 h-5 text-error shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-semibold text-paper uppercase font-mono tracking-wider text-[10px] text-error">Care Prompt</h4>
+                    <p className="text-[11px] text-fog leading-relaxed">{flag}</p>
+                  </div>
+                </div>
+              ))}
+
+              {/* Correlations */}
+              {insights.map((insight, idx) => (
+                <div key={idx} className="glass-panel rounded-md p-4 flex gap-3 border-l-2 border-signal shadow-md">
+                  <Heart className="w-5 h-5 text-signal shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <h4 className="text-xs font-semibold text-paper uppercase font-mono tracking-wider text-[10px] text-signal">Phase Correlation</h4>
+                    <p className="text-[11px] text-fog leading-relaxed">{insight}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

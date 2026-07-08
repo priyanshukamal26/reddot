@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import PhaseRing from "@/components/tracking/PhaseRing";
 import { useAuth } from "@/context/auth-context";
-import { loadAllCycles } from "@/lib/data";
-import { calculateCycleStats, getCurrentPhase, predictNextPeriod, formatDate, daysUntil } from "@/lib/cycle";
+import { loadAllCycles, loadAllEntries } from "@/lib/data";
+import { summarizeRecentData } from "@/lib/summary";
+import { calculateCycleStats, getCurrentPhase, predictNextPeriod, formatDate, daysUntil, calculateLoggingStreak } from "@/lib/cycle";
 import type { Cycle, CurrentPhase as CurrentPhaseType } from "@/lib/types";
 import { Calendar, PenLine, Sparkles, AlertCircle, Database, LogOut, TrendingUp } from "lucide-react";
 
@@ -26,6 +27,9 @@ export default function DashboardPage() {
   const [phase, setPhase] = useState<CurrentPhaseType | null>(null);
   const [prediction, setPrediction] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [aiInsight, setAiInsight] = useState<string>("");
+  const [insightLoading, setInsightLoading] = useState(false);
+  const [streak, setStreak] = useState<number>(0);
 
   // Time-based greeting
   useEffect(() => {
@@ -70,6 +74,40 @@ export default function DashboardPage() {
         } else {
           setPrediction(`Next Period: ~${formatDate(pred.expectedDate)} (${days} days)`);
         }
+
+        // Fetch dynamic AI insight
+        const entries = await loadAllEntries();
+        const summaryText = summarizeRecentData(entries);
+
+        // Calculate logging streak
+        const streakVal = calculateLoggingStreak(entries);
+        setStreak(streakVal);
+
+        setInsightLoading(true);
+        try {
+          const res = await fetch("/api/ai/insight", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              recent_data_summary: summaryText,
+              phase: currentPhase.phase,
+              dayWithinPhase: currentPhase.dayWithinPhase,
+              confidence: currentPhase.confidence,
+            }),
+          });
+          if (res.ok) {
+            const resData = await res.json();
+            setAiInsight(resData.insight);
+          } else {
+            setAiInsight("Keep tracking daily to prompt private recommendations & correlation insights.");
+          }
+        } catch (apiErr) {
+          console.error("AI Insight request failed:", apiErr);
+          setAiInsight("Keep tracking daily to prompt private recommendations & correlation insights.");
+        } finally {
+          setInsightLoading(false);
+        }
+
       } catch (err) {
         console.error("Failed to load cycle data:", err);
       } finally {
@@ -107,9 +145,16 @@ export default function DashboardPage() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-paper">{greeting}</h1>
-            <p className="text-fog text-xs mt-1 font-mono uppercase tracking-wider">
-              Secure Local Sandbox
-            </p>
+            <div className="flex gap-2 items-center mt-1">
+              <span className="text-fog text-[10px] font-mono uppercase tracking-wider">
+                Secure Local Sandbox
+              </span>
+              {streak > 0 && (
+                <span className="text-signal text-[10px] font-mono font-bold flex items-center gap-0.5 animate-pulse">
+                  • 🔥 {streak}-DAY STREAK
+                </span>
+              )}
+            </div>
           </div>
           <button
             onClick={() => {
@@ -216,9 +261,17 @@ export default function DashboardPage() {
               RedDot.ai Engine
             </span>
           </div>
-          <p className="text-xs text-fog leading-relaxed">
-            Your logs are fully isolated. Start logging symptoms daily to prompt private recommendations & correlation insights.
-          </p>
+          {insightLoading ? (
+            <div className="space-y-2 animate-pulse">
+              <div className="h-3.5 bg-ash rounded w-5/6" />
+              <div className="h-3.5 bg-ash rounded w-full" />
+              <div className="h-3.5 bg-ash rounded w-2/3" />
+            </div>
+          ) : (
+            <p className="text-xs text-fog leading-relaxed">
+              {aiInsight || "Your logs are fully isolated. Start logging symptoms daily to prompt private recommendations & correlation insights."}
+            </p>
+          )}
         </div>
 
         {/* ── Last backup indicator ── */}

@@ -1,5 +1,82 @@
 # RedDot — Build Walkthrough
 
+## Session 7: Landing Page Overhaul, Scroll Pinning Alignment, compressed ranges, and Scrolling Marquee (2026-07-09)
+
+### What was done
+
+**Rebuilt the public landing page and global styles** to adhere to the RedDot Design System v2 specification, aligning scrollytelling visual effects, scroll pinning vertical layout, scroll duration, copy editing, and animation seamlessness.
+
+#### New files
+
+| File | Purpose |
+|------|---------|
+| [DecryptReveal.tsx](file:///c:/Projects/reddot/src/components/layout/DecryptReveal.tsx) | SVG turbulence filter client component implementing static-resolving-to-signal phase image transition. |
+| [copy-assets.js](file:///c:/Projects/reddot/src/scripts/copy-assets.js) | Asset synchronization helper script copying generated resources from `src/assets` to `public/assets` on prebuild. |
+| [refactor-colors.js](file:///c:/Projects/reddot/src/scripts/refactor-colors.js) | Styling utility script mapping color tokens for the redesign overhaul. |
+| [reddot-design-system.md](file:///c:/Projects/reddot/docs/reddot-design-system.md) | landing page redesign specification (Creative Direction, Motion Catalog, and Asset Manifest). |
+
+#### Modified files
+
+| File | Changes |
+|------|---------|
+| [page.tsx](file:///c:/Projects/reddot/src/app/page.tsx) | Removed layout conflicts on `core-orb` img; set ScrollTrigger start to `"top 15%"`; compressed pin scroll range to `+=1800`px; updated jump offsets; imported Activity/Sparkles/ShieldCheck Lucide icons; added `shrink-0` classes to marquee ribbon; edited Section 2 quotes, spacing, and spacer. |
+| [globals.css](file:///c:/Projects/reddot/src/app/globals.css) | Added global `@keyframes marquee` rule for infinite horizontal scrolling translation. |
+
+#### Verification
+All 27 routes compile successfully with zero TypeScript compilation errors and production builds successfully:
+```
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/ai/chat
+├ ƒ /api/ai/insight
+├ ƒ /api/ai/report
+├ ƒ /api/auth/[...nextauth]
+├ ƒ /api/auth/reset-password
+├ ƒ /api/auth/salt
+├ ƒ /api/auth/signup
+├ ƒ /api/sync/pull
+├ ƒ /api/sync/push
+├ ƒ /api/user/meta
+├ ƒ /api/user/wipe
+├ ○ /dashboard
+├ ○ /dashboard/ai
+├ ○ /dashboard/cycle
+├ ○ /dashboard/insights
+├ ○ /dashboard/know
+├ ƒ /dashboard/know/[slug]
+├ ○ /dashboard/log
+├ ○ /dashboard/report
+├ ○ /dashboard/settings
+├ ○ /forgot-password
+├ ○ /login
+├ ○ /onboarding
+├ ○ /privacy
+└ ○ /signup
+```
+
+---
+
+## Session 6: Session Persistence, Log Editing, Demo Data Seeder & Brand Consistency (2026-07-08)
+
+### What was done
+
+**Implemented key UX and reliability improvements** including sessionStorage-based encryption key retention to prevent logout on page refreshes, URL-based date parameter logging, a Settings-based 90-day cyclic history generator, reports link fixing, and consistent header navbar layouts.
+
+#### Modified files
+
+| File | Changes |
+|------|---------|
+| [crypto.ts](file:///c:/Projects/reddot/src/lib/crypto.ts) | Exported Web Crypto key import/export to Base64 helpers. |
+| [auth-context.tsx](file:///c:/Projects/reddot/src/context/auth-context.tsx) | Implemented sessionStorage-based auth key persistence on login/signup and restoration on mount. |
+| [ChatPageContent.tsx](file:///c:/Projects/reddot/src/components/ai/ChatPageContent.tsx) | Replaced raw anchor `<a>` link with Next.js `<Link>` to prevent full page reloads and state destruction. |
+| [login/page.tsx](file:///c:/Projects/reddot/src/app/login/page.tsx) & [signup/page.tsx](file:///c:/Projects/reddot/src/app/signup/page.tsx) | Integrated fixed top navbar consistent with landing page. |
+| [dashboard/log/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/log/page.tsx) | Supported query parameters `?date=YYYY-MM-DD` and added "Autofill Random Data" button. |
+| [DayDetail.tsx](file:///c:/Projects/reddot/src/components/tracking/DayDetail.tsx) | Added editing redirect button routing to logs. |
+| [dashboard/settings/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/settings/page.tsx) | Added a "Generate 90-Day Demo History" seeder. |
+
+---
+
 ## Session 5: Know Hub, Article Views, Navigation Sync, Local DB Mock, Login Sync Recovery & Resilient Decryption (2026-07-05)
 
 ### What was done

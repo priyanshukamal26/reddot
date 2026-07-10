@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import PillNav, { type NavSection } from "@/components/nav/PillNav";
 import ProfilePopup from "@/components/nav/ProfilePopup";
+import type { CyclePhase } from "@/lib/types";
 
 // ──────────────────────────────────────────────
 // App Shell — wraps all authenticated (post-login) pages
@@ -20,6 +21,7 @@ interface AppShellProps {
   onToggleSync?: () => void;
   onLogout?: () => void;
   onOpenSettings?: () => void;
+  currentPhase?: CyclePhase | null;
 }
 
 export default function AppShell({
@@ -32,6 +34,7 @@ export default function AppShell({
   onToggleSync,
   onLogout,
   onOpenSettings,
+  currentPhase = null,
 }: AppShellProps) {
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -46,12 +49,13 @@ export default function AppShell({
   return (
     <div className="min-h-screen flex flex-col bg-void relative">
       {/* ── Fixed nav header ── */}
-      <header className="sticky top-0 z-40 bg-void/95 backdrop-blur-sm border-b border-fog/5">
+      <header className="sticky top-0 z-40 bg-void/95 backdrop-blur-sm border-b border-void-border">
         <PillNav
           activeSection={activeSection}
           onSectionChange={onSectionChange}
           onProfileClick={handleProfileClick}
           userInitial={email ? email[0].toUpperCase() : "?"}
+          currentPhase={currentPhase}
         />
 
         {/* Profile popup (anchored to nav header) */}
@@ -70,6 +74,7 @@ export default function AppShell({
             handleCloseProfile();
             onLogout?.();
           }}
+          currentPhase={currentPhase}
         />
       </header>
 

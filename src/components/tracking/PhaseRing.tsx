@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
+import { gsap } from "gsap";
 import type { CyclePhase } from "@/lib/types";
 
 // ──────────────────────────────────────────────
@@ -26,6 +27,8 @@ interface PhaseRingProps {
   strokeWidth?: number;
   className?: string;
   showLabel?: boolean;
+  animate?: boolean;
+  children?: React.ReactNode;
 }
 
 const PHASE_COLORS = {
@@ -59,11 +62,36 @@ export default function PhaseRing({
   strokeWidth = 12,
   className = "",
   showLabel = true,
+  animate = false,
+  children,
 }: PhaseRingProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [animatedCycleDay, setAnimatedCycleDay] = useState(animate ? 0 : cycleDay);
 
   const radius = (size - strokeWidth) / 2;
   const center = size / 2;
+
+  // Animate cycle day progress drawing in
+  useEffect(() => {
+    if (!animate) {
+      setAnimatedCycleDay(cycleDay);
+      return;
+    }
+
+    const obj = { val: 0 };
+    const tween = gsap.to(obj, {
+      val: cycleDay,
+      duration: 1.8,
+      ease: "power3.out",
+      onUpdate: () => {
+        setAnimatedCycleDay(obj.val);
+      },
+    });
+
+    return () => {
+      tween.kill();
+    };
+  }, [cycleDay, animate]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -76,15 +104,27 @@ export default function PhaseRing({
     const dpr = window.devicePixelRatio || 1;
     canvas.width = size * dpr;
     canvas.height = size * dpr;
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
     ctx.scale(dpr, dpr);
 
     // Clear
     ctx.clearRect(0, 0, size, size);
 
-    // Draw gradient ring — sweep through phases as a continuous arc
+    // 1. Draw faint background track
+    ctx.beginPath();
+    ctx.arc(center, center, radius, 0, 2 * Math.PI);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
+    ctx.lineWidth = strokeWidth;
+    ctx.stroke();
+
+    // 2. Draw gradient ring — sweep through phases as a continuous arc up to current day's progress
     const phases: CyclePhase[] = ["menstrual", "follicular", "ovulation", "luteal"];
+    const currentProgressFraction = Math.min(animatedCycleDay / totalCycleDays, 1);
+    
     const totalSegments = 360;
     const segmentAngle = (2 * Math.PI) / totalSegments;
+    const activeSegments = Math.floor(currentProgressFraction * totalSegments);
 
     let cumulativeFraction = 0;
     const phaseStarts: number[] = [];
@@ -93,7 +133,7 @@ export default function PhaseRing({
       cumulativeFraction += DEFAULT_PHASE_FRACTIONS[phase];
     }
 
-    for (let i = 0; i < totalSegments; i++) {
+    for (let i = 0; i < activeSegments; i++) {
       const fraction = i / totalSegments;
       const angle = -Math.PI / 2 + i * segmentAngle; // Start from top
 
@@ -128,59 +168,63 @@ export default function PhaseRing({
       ctx.stroke();
     }
 
-    // Draw current position marker — sharp tick, not a dot
-    const markerFraction = Math.min(cycleDay / totalCycleDays, 1);
-    const markerAngle = -Math.PI / 2 + markerFraction * 2 * Math.PI;
-    const markerInnerRadius = radius - strokeWidth / 2 - 4;
-    const markerOuterRadius = radius + strokeWidth / 2 + 4;
+    // 3. Draw current position marker — sharp tick, not a dot
+    if (activeSegments > 0) {
+      const markerAngle = -Math.PI / 2 + currentProgressFraction * 2 * Math.PI;
+      const markerInnerRadius = radius - strokeWidth / 2 - 4;
+      const markerOuterRadius = radius + strokeWidth / 2 + 4;
 
-    ctx.beginPath();
-    ctx.moveTo(
-      center + markerInnerRadius * Math.cos(markerAngle),
-      center + markerInnerRadius * Math.sin(markerAngle)
-    );
-    ctx.lineTo(
-      center + markerOuterRadius * Math.cos(markerAngle),
-      center + markerOuterRadius * Math.sin(markerAngle)
-    );
-    ctx.strokeStyle = "#FAFAFA";
-    ctx.lineWidth = 3;
-    ctx.lineCap = "round";
-    ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(
+        center + markerInnerRadius * Math.cos(markerAngle),
+        center + markerInnerRadius * Math.sin(markerAngle)
+      );
+      ctx.lineTo(
+        center + markerOuterRadius * Math.cos(markerAngle),
+        center + markerOuterRadius * Math.sin(markerAngle)
+      );
+      ctx.strokeStyle = "#FAFAFA";
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.stroke();
 
-    // Small filled circle at the tip
-    ctx.beginPath();
-    ctx.arc(
-      center + markerOuterRadius * Math.cos(markerAngle),
-      center + markerOuterRadius * Math.sin(markerAngle),
-      4,
-      0,
-      2 * Math.PI
-    );
-    ctx.fillStyle = "#FAFAFA";
-    ctx.fill();
-  }, [currentPhase, cycleDay, totalCycleDays, size, strokeWidth, radius, center]);
+      // Small filled circle at the tip
+      ctx.beginPath();
+      ctx.arc(
+        center + markerOuterRadius * Math.cos(markerAngle),
+        center + markerOuterRadius * Math.sin(markerAngle),
+        4,
+        0,
+        2 * Math.PI
+      );
+      ctx.fillStyle = "#FAFAFA";
+      ctx.fill();
+    }
+  }, [animatedCycleDay, currentPhase, cycleDay, totalCycleDays, size, strokeWidth, radius, center]);
 
   return (
     <div className={`relative inline-flex flex-col items-center ${className}`}>
       <canvas
         ref={canvasRef}
-        style={{ width: size, height: size }}
         aria-label={`Cycle phase ring: ${PHASE_LABELS[currentPhase]}, day ${dayWithinPhase}`}
         role="img"
       />
 
       {/* Center text — phase + day count */}
       <div
-        className="absolute inset-0 flex flex-col items-center justify-center"
+        className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
         style={{ width: size, height: size }}
       >
-        <span className="text-3xl font-bold text-paper font-mono">
-          {cycleDay}
-        </span>
-        <span className="text-xs text-fog uppercase tracking-widest mt-1">
-          Day
-        </span>
+        {children ? children : (
+          <>
+            <span className="text-3xl font-bold text-paper font-mono">
+              {cycleDay}
+            </span>
+            <span className="text-xs text-fog uppercase tracking-widest mt-1">
+              Day
+            </span>
+          </>
+        )}
       </div>
 
       {/* Text label below ring — accessibility: phase never communicated by color alone */}
@@ -202,7 +246,7 @@ export default function PhaseRing({
 }
 
 // ──────────────────────────────────────────────
-// Color interpolation helper
+// Color interpolation helpers
 // ──────────────────────────────────────────────
 
 function hexToRgb(hex: string): [number, number, number] {

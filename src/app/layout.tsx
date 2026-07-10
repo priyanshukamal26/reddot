@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Bricolage_Grotesque } from "next/font/google";
 import Providers from "./providers";
+import CursorAndGrain from "@/components/layout/CursorAndGrain";
 import "./globals.css";
 
 const inter = Inter({
@@ -11,6 +12,12 @@ const inter = Inter({
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const bricolageGrotesque = Bricolage_Grotesque({
+  variable: "--font-display",
   subsets: ["latin"],
   display: "swap",
 });
@@ -29,10 +36,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${bricolageGrotesque.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-void text-paper font-sans">
-        <Providers>{children}</Providers>
+        <Providers>
+          <CursorAndGrain />
+          {children}
+        </Providers>
       </body>
     </html>
   );

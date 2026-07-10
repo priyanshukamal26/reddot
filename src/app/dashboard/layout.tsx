@@ -17,6 +17,9 @@ import AuthGuard from "@/components/auth/AuthGuard";
 import AppShell from "@/components/layout/AppShell";
 import type { NavSection } from "@/components/nav/PillNav";
 import { useAuth } from "@/context/auth-context";
+import { loadAllCycles } from "@/lib/data";
+import { calculateCycleStats, getCurrentPhase } from "@/lib/cycle";
+import type { CyclePhase } from "@/lib/types";
 
 export default function DashboardLayout({
   children,
@@ -26,6 +29,27 @@ export default function DashboardLayout({
   const { logout, meta, email, refreshMeta } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [currentPhase, setCurrentPhase] = useState<CyclePhase | null>(null);
+
+  // Load current phase state
+  useEffect(() => {
+    async function fetchPhase() {
+      try {
+        const cycles = await loadAllCycles();
+        if (cycles.length > 0) {
+          const sorted = [...cycles].sort(
+            (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+          );
+          const stats = calculateCycleStats(cycles);
+          const phaseInfo = getCurrentPhase(sorted[0].startDate, stats);
+          setCurrentPhase(phaseInfo.phase);
+        }
+      } catch (err) {
+        console.error("Failed to load phase for nav:", err);
+      }
+    }
+    fetchPhase();
+  }, [pathname]); // Refresh on navigation/page updates
 
   // Helper to determine active section from pathname
   const getActiveSectionFromPath = useCallback((path: string): NavSection => {
@@ -98,6 +122,7 @@ export default function DashboardLayout({
         onToggleSync={handleToggleSync}
         onOpenSettings={handleOpenSettings}
         onLogout={handleLogout}
+        currentPhase={currentPhase}
       >
         {children}
       </AppShell>

@@ -26,6 +26,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import DecryptReveal from "@/components/layout/DecryptReveal";
+import PhaseRing from "@/components/tracking/PhaseRing";
 
 // Assets referenced via static public URLs (copied from src/assets to public/assets on prebuild)
 const heroSignalBloom = "/assets/video/hero-signal-bloom.mp4";
@@ -67,11 +68,7 @@ const sectionIds = ["section-1", "section-2", "section-3", "section-4", "section
 
 export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<SVGCircleElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const dotRef = useRef<HTMLDivElement>(null);
-  const ringCursorRef = useRef<HTMLDivElement>(null);
-  const viewTagRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const orbRef = useRef<HTMLImageElement>(null);
   const smootherRef = useRef<ScrollSmoother | null>(null);
@@ -84,7 +81,6 @@ export default function Home() {
   const [orbError, setOrbError] = useState(false);
   const [phaseErrors, setPhaseErrors] = useState<Record<number, boolean>>({});
   const [hamburgerOpen, setHamburgerOpen] = useState(false);
-  const [isTouchDevice, setIsTouchDevice] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [isScramblePlaying, setIsScramblePlaying] = useState(false);
 
@@ -98,26 +94,7 @@ export default function Home() {
     return () => mediaQuery.removeEventListener("change", listener);
   }, []);
 
-  // Monitor touch device (pointer: coarse) vs mouse (pointer: fine)
-  useEffect(() => {
-    if (typeof window === "undefined" || prefersReducedMotion) return;
-    const finePointer = window.matchMedia("(pointer: fine)");
-    const updateCursorSupport = (e: MediaQueryListEvent | MediaQueryList) => {
-      setIsTouchDevice(!e.matches);
-      if (e.matches) {
-        document.documentElement.classList.add("custom-cursor-active");
-      } else {
-        document.documentElement.classList.remove("custom-cursor-active");
-      }
-    };
-    updateCursorSupport(finePointer);
-    const listener = (e: MediaQueryListEvent) => updateCursorSupport(e);
-    finePointer.addEventListener("change", listener);
-    return () => {
-      finePointer.removeEventListener("change", listener);
-      document.documentElement.classList.remove("custom-cursor-active");
-    };
-  }, [prefersReducedMotion]);
+
 
   // Delayed hero video mounting (2800ms pattern)
   useEffect(() => {
@@ -222,23 +199,7 @@ export default function Home() {
         });
       });
 
-      // 3. Section 1F: Existing radial progress ring SVG animation on scroll entry
-      if (ringRef.current) {
-        gsap.fromTo(
-          ringRef.current,
-          { strokeDashoffset: 628 }, // 2 * Math.PI * 100
-          {
-            strokeDashoffset: 150,
-            duration: 1.8,
-            ease: "signal",
-            scrollTrigger: {
-              trigger: "#section-1",
-              start: "top 80%",
-              toggleActions: "play none none none",
-            },
-          }
-        );
-      }
+
 
       // 4. Section 2B: Heading parallax in-view
       gsap.fromTo(
@@ -364,81 +325,7 @@ export default function Home() {
     };
   }, []);
 
-  // Custom Cursor mouse tracking and hover handlers
-  useEffect(() => {
-    if (isTouchDevice || prefersReducedMotion || typeof window === "undefined") return;
 
-    const xToDot = gsap.quickTo(dotRef.current, "x", { duration: 0.15, ease: "power3" });
-    const yToDot = gsap.quickTo(dotRef.current, "y", { duration: 0.15, ease: "power3" });
-    const xToRing = gsap.quickTo(ringCursorRef.current, "x", { duration: 0.35, ease: "power3" });
-    const yToRing = gsap.quickTo(ringCursorRef.current, "y", { duration: 0.35, ease: "power3" });
-
-    let currentPaperState = false;
-    let currentInteractiveState = false;
-    let currentCarouselImageState = false;
-
-    const onMouseMove = (e: MouseEvent) => {
-      xToDot(e.clientX - 4); // Center 8px dot
-      yToDot(e.clientY - 4);
-      xToRing(e.clientX - 18); // Center 36px ring
-      yToRing(e.clientY - 18);
-
-      if (viewTagRef.current) {
-        gsap.to(viewTagRef.current, {
-          x: e.clientX + 24,
-          y: e.clientY - 12,
-          duration: 0.2,
-        });
-      }
-
-      const target = e.target as HTMLElement;
-      if (!target) return;
-
-      const section = target.closest("section");
-      const isPaper = section ? section.id === "section-2" || section.id === "section-4" : false;
-      const isInteractive = target.closest("a, button, [role='button'], input, select, textarea, .interactive-hover");
-      const isCarouselImage = target.closest(".carousel-image-trigger");
-
-      // Adaptive Color
-      if (isPaper !== currentPaperState) {
-        currentPaperState = isPaper;
-        gsap.to(ringCursorRef.current, {
-          borderColor: isPaper ? "rgba(17,17,17,0.3)" : "rgba(224,16,40,0.4)",
-          duration: 0.2,
-        });
-      }
-
-      // Hover Scaling & Tint fill
-      if (!!isInteractive !== currentInteractiveState) {
-        currentInteractiveState = !!isInteractive;
-        gsap.to(ringCursorRef.current, {
-          scale: isInteractive ? 1.67 : 1,
-          backgroundColor: isInteractive
-            ? (isPaper ? "rgba(17,17,17,0.08)" : "rgba(224,16,40,0.1)")
-            : "transparent",
-          borderColor: isInteractive
-            ? (isPaper ? "rgba(17,17,17,0.4)" : "rgba(224,16,40,0.6)")
-            : (isPaper ? "rgba(17,17,17,0.3)" : "rgba(224,16,40,0.4)"),
-          duration: 0.3,
-        });
-      }
-
-      // View tag display on phase images
-      if (!!isCarouselImage !== currentCarouselImageState) {
-        currentCarouselImageState = !!isCarouselImage;
-        gsap.to(viewTagRef.current, {
-          opacity: isCarouselImage ? 1 : 0,
-          scale: isCarouselImage ? 1 : 0.8,
-          duration: 0.2,
-        });
-      }
-    };
-
-    window.addEventListener("mousemove", onMouseMove);
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-    };
-  }, [isTouchDevice, prefersReducedMotion]);
 
   // Section navigation scroll coordinator
   const scrollToSection = (index: number) => {
@@ -537,30 +424,7 @@ export default function Home() {
 
   return (
     <div ref={containerRef} className="space-grid relative min-h-screen bg-void-950 overflow-hidden">
-      {/* ── 4.2 Ambient Film Grain Overlay ── */}
-      <div className="ambient-grain pointer-events-none fixed inset-0 z-50 opacity-4 transition-opacity duration-500" />
 
-      {/* ── 4.1 Custom Pointer Comet (Desktop only) ── */}
-      {!isTouchDevice && !prefersReducedMotion && (
-        <>
-          <div
-            ref={dotRef}
-            className="fixed top-0 left-0 w-2 h-2 rounded-full bg-signal-500 pointer-events-none z-50"
-            style={{ transform: "translate3d(0, 0, 0)" }}
-          />
-          <div
-            ref={ringCursorRef}
-            className="fixed top-0 left-0 w-9 h-9 rounded-full border border-signal-500/40 pointer-events-none z-50 transition-colors duration-200"
-            style={{ transform: "translate3d(0, 0, 0)" }}
-          />
-          <div
-            ref={viewTagRef}
-            className="fixed top-0 left-0 opacity-0 pointer-events-none z-50 px-2.5 py-1 bg-black/90 border border-void-border rounded font-mono text-[9px] tracking-wider text-signal-500 font-bold"
-          >
-            VIEW
-          </div>
-        </>
-      )}
 
       {/* ── 4.3 Scroll Wayfinding Progress Rail (Desktop only) ── */}
       <div className="fixed right-10 top-1/2 -translate-y-1/2 z-40 hidden md:flex items-center gap-4">
@@ -766,45 +630,24 @@ export default function Home() {
                     <span className="w-1.5 h-1.5 rounded-full bg-signal-500 animate-pulse" />
                   </div>
 
-                  {/* SVG radial progress ring */}
+                  {/* Shared radial progress ring */}
                   <div className="flex justify-center relative py-2">
-                    <div className="relative w-[180px] h-[180px] flex items-center justify-center">
-                      <div className="absolute inset-0 rounded-full border border-signal-500/5 scale-105" />
-                      <svg className="w-full h-full transform -rotate-90" viewBox="0 0 240 240">
-                        <defs>
-                          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#E01028" />
-                            <stop offset="100%" stopColor="#FCD4D0" />
-                          </linearGradient>
-                        </defs>
-                        <circle
-                          cx="120"
-                          cy="120"
-                          r="100"
-                          stroke="rgba(255,255,255,0.015)"
-                          strokeWidth="8"
-                          fill="transparent"
-                        />
-                        <circle
-                          ref={ringRef}
-                          cx="120"
-                          cy="120"
-                          r="100"
-                          stroke="url(#ringGrad)"
-                          strokeWidth="10"
-                          fill="transparent"
-                          strokeDasharray="628"
-                          strokeDashoffset="628"
-                          strokeLinecap="round"
-                        />
-                      </svg>
+                    <PhaseRing
+                      currentPhase="follicular"
+                      dayWithinPhase={4}
+                      cycleDay={4}
+                      size={180}
+                      strokeWidth={10}
+                      showLabel={false}
+                      animate={!prefersReducedMotion}
+                    >
                       {/* Instrument labels */}
-                      <div className="absolute text-center flex flex-col items-center justify-center space-y-0.5">
+                      <div className="absolute text-center flex flex-col items-center justify-center space-y-0.5 pointer-events-none">
                         <span className="text-3xl font-bold tracking-tight font-mono text-paper-50">04</span>
                         <p className="text-[8px] text-ink-500 uppercase tracking-widest font-mono font-medium">Follicular Phase</p>
                         <p className="text-[7.5px] text-signal-500 font-mono tracking-wider font-semibold">Day 4 of 9</p>
                       </div>
-                    </div>
+                    </PhaseRing>
                   </div>
 
                   {/* On-device stats instrument */}

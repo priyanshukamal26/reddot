@@ -56,7 +56,27 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-void flex flex-col justify-center items-center px-4 relative pt-16">
+    <main className="min-h-screen bg-void flex flex-col justify-center items-center px-4 relative pt-16 overflow-hidden">
+      <style>{`
+        @keyframes breathe {
+          0%, 100% { transform: scale(1); opacity: 0.12; }
+          50% { transform: scale(1.05); opacity: 0.16; }
+        }
+      `}</style>
+
+      {/* Ambient background orb */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0 flex items-center justify-center">
+        <div className="w-[400px] h-[400px] rounded-full bg-signal-500/5 blur-[100px] absolute" />
+        <img
+          src="/assets/images/core-orb.jpeg"
+          alt=""
+          className="w-[800px] h-[800px] object-contain opacity-[0.12] blur-3xl absolute select-none pointer-events-none"
+          style={{
+            animation: "breathe 10s ease-in-out infinite",
+          }}
+        />
+      </div>
+
       {/* ── Fixed Header ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass-panel border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center">
         <div className="flex items-center gap-2">
@@ -75,14 +95,14 @@ export default function LoginPage() {
         </div>
       </nav>
 
-      <div className="w-full max-w-sm space-y-8 my-auto">
+      <div className="w-full max-w-sm space-y-8 my-auto relative z-10">
         {/* Logo */}
         <div className="text-center">
           <h1 className="text-4xl font-bold tracking-tight text-paper">
             Red<span className="text-signal">Dot</span>
           </h1>
           <p className="text-fog text-sm mt-2">
-            Menstrual health, private by design.
+            Your cycle, private by design.
           </p>
         </div>
 

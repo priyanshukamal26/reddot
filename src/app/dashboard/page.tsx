@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import PhaseRing from "@/components/tracking/PhaseRing";
+import CoreDot from "@/components/layout/CoreDot";
 import { useAuth } from "@/context/auth-context";
 import { loadAllCycles, loadAllEntries } from "@/lib/data";
 import { summarizeRecentData } from "@/lib/summary";
@@ -144,7 +145,7 @@ export default function DashboardPage() {
         {/* ── Header Greeting ── */}
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-paper">{greeting}</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-paper font-display">{greeting}</h1>
             <div className="flex gap-2 items-center mt-1">
               <span className="text-fog text-[10px] font-mono uppercase tracking-wider">
                 Secure Local Sandbox
@@ -161,7 +162,7 @@ export default function DashboardPage() {
               logout();
               router.replace("/login");
             }}
-            className="p-2 rounded bg-ash/60 border border-white/5 text-fog hover:text-signal transition-colors"
+            className="p-2 rounded bg-void-900 border border-void-border text-fog hover:text-signal transition-colors"
             title="Log Out"
           >
             <LogOut className="w-4 h-4" />
@@ -169,7 +170,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Main Phase Card (Glassmorphic) ── */}
-        <div className="glass-panel rounded-lg p-6 flex flex-col items-center justify-center space-y-6 relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+        <div className="glass-panel rounded-xl p-6 flex flex-col items-center justify-center space-y-6 relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)]">
           {/* Subtle accent corner element */}
           <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-signal/5 to-transparent pointer-events-none" />
 
@@ -183,6 +184,7 @@ export default function DashboardPage() {
                   dayWithinPhase={phase.dayWithinPhase}
                   cycleDay={phase.cycleDay}
                   size={200}
+                  animate={true}
                 />
               </div>
 
@@ -208,9 +210,9 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <button
             onClick={() => router.push("/dashboard/log")}
-            className="glass-panel text-left p-4 rounded-md hover:bg-ash/50 hover:border-signal/30 group transition-all duration-300 shadow-lg relative overflow-hidden"
+            className="bg-void-900 border border-void-border text-left p-5 rounded-xl hover:bg-void-800 hover:border-signal-500/50 hover:shadow-[4px_4px_0px_rgba(224,16,40,0.35)] group transition-all duration-300 relative overflow-hidden"
           >
-            <div className="absolute top-3 right-3 text-fog/30 group-hover:text-signal transition-colors">
+            <div className="w-9 h-9 rounded-full border border-void-border flex items-center justify-center text-fog/50 group-hover:text-signal group-hover:border-signal-500/50 transition-colors mb-3">
               <PenLine className="w-4 h-4" />
             </div>
             <div className="text-xs font-semibold text-paper tracking-wide">
@@ -223,9 +225,9 @@ export default function DashboardPage() {
 
           <button
             onClick={() => router.push("/dashboard/cycle")}
-            className="glass-panel text-left p-4 rounded-md hover:bg-ash/50 hover:border-signal/30 group transition-all duration-300 shadow-lg relative overflow-hidden"
+            className="bg-void-900 border border-void-border text-left p-5 rounded-xl hover:bg-void-800 hover:border-signal-500/50 hover:shadow-[4px_4px_0px_rgba(224,16,40,0.35)] group transition-all duration-300 relative overflow-hidden"
           >
-            <div className="absolute top-3 right-3 text-fog/30 group-hover:text-signal transition-colors">
+            <div className="w-9 h-9 rounded-full border border-void-border flex items-center justify-center text-fog/50 group-hover:text-signal group-hover:border-signal-500/50 transition-colors mb-3">
               <Calendar className="w-4 h-4" />
             </div>
             <div className="text-xs font-semibold text-paper tracking-wide">
@@ -238,9 +240,9 @@ export default function DashboardPage() {
 
           <button
             onClick={() => router.push("/dashboard/insights")}
-            className="glass-panel text-left p-4 rounded-md hover:bg-ash/50 hover:border-signal/30 group transition-all duration-300 shadow-lg relative overflow-hidden"
+            className="bg-void-900 border border-void-border text-left p-5 rounded-xl hover:bg-void-800 hover:border-signal-500/50 hover:shadow-[4px_4px_0px_rgba(224,16,40,0.35)] group transition-all duration-300 relative overflow-hidden"
           >
-            <div className="absolute top-3 right-3 text-fog/30 group-hover:text-signal transition-colors">
+            <div className="w-9 h-9 rounded-full border border-void-border flex items-center justify-center text-fog/50 group-hover:text-signal group-hover:border-signal-500/50 transition-colors mb-3">
               <TrendingUp className="w-4 h-4" />
             </div>
             <div className="text-xs font-semibold text-paper tracking-wide">
@@ -252,8 +254,8 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* ── AI Insight preview ── */}
-        <div className="glass-panel rounded-md p-5 border-l-2 border-signal shadow-md relative overflow-hidden">
+        {/* ── AI Insight preview (Disclosure block layout) ── */}
+        <div className="border-l-2 border-signal-500 bg-black/20 px-5 py-4 rounded-r-xl shadow-md relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-signal/5 to-transparent pointer-events-none" />
           <div className="flex items-center gap-2 mb-2.5">
             <Sparkles className="w-4 h-4 text-signal" />
@@ -262,10 +264,9 @@ export default function DashboardPage() {
             </span>
           </div>
           {insightLoading ? (
-            <div className="space-y-2 animate-pulse">
-              <div className="h-3.5 bg-ash rounded w-5/6" />
-              <div className="h-3.5 bg-ash rounded w-full" />
-              <div className="h-3.5 bg-ash rounded w-2/3" />
+            <div className="flex items-center gap-3 py-2">
+              <CoreDot pulse={true} className="w-2 h-2" />
+              <span className="text-xs font-mono text-ink-500 uppercase tracking-widest animate-pulse">Analyzing telemetry...</span>
             </div>
           ) : (
             <p className="text-xs text-fog leading-relaxed">

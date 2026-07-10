@@ -1,5 +1,40 @@
 # RedDot — Build Walkthrough
 
+## Session 8: Authenticated Product Visual and Component-Layer Overhaul (2026-07-10)
+
+### What was done
+
+**Extended the signature design language (Void theme, Core motif, typography, and motion) to the authenticated product** including the navigation system, authentication screens, tracking dashboard, AI chat page, and Know Hub.
+
+#### New files
+
+| File | Purpose |
+|------|---------|
+| [CoreDot.tsx](file:///c:/Projects/reddot/src/components/layout/CoreDot.tsx) | A unified, breathing 8px brand dot component matching the cursor comet and phase status dot. |
+| [CursorAndGrain.tsx](file:///c:/Projects/reddot/src/components/layout/CursorAndGrain.tsx) | Unified cursor follower and grain opacity controller wrapper. |
+
+#### Modified files
+
+| File | Changes |
+|------|---------|
+| [layout.tsx](file:///c:/Projects/reddot/src/app/layout.tsx) | Loaded `Bricolage Grotesque` Display font as `--font-display` and registered global `CursorAndGrain`. |
+| [page.tsx](file:///c:/Projects/reddot/src/app/page.tsx) | Cleaned up local cursor Ref/handlers, replaced the right sidebar inline SVG progress ring with the new shared animated `PhaseRing`. |
+| [PhaseRing.tsx](file:///c:/Projects/reddot/src/components/tracking/PhaseRing.tsx) | Consolidated canvas-based progress ring to support custom children and GSAP animate-in progress sweeps, fixing canvas style size reference. |
+| [layout.tsx](file:///c:/Projects/reddot/src/app/dashboard/layout.tsx) | Loaded current cycle phase on mount to pass down through navigation systems. |
+| [AppShell.tsx](file:///c:/Projects/reddot/src/components/layout/AppShell.tsx) | Routed computed phase to navigation modules. |
+| [PillNav.tsx](file:///c:/Projects/reddot/src/components/nav/PillNav.tsx) | Styled active navigation segment with 1px border and 10% red fill, set uppercase mono layout, and integrated live-phase-adaptive logo `CoreDot`. |
+| [ProfilePopup.tsx](file:///c:/Projects/reddot/src/components/nav/ProfilePopup.tsx) | Re-styled backup label, lock icons, settings font size, and added encryption disclosure card. |
+| [login/page.tsx](file:///c:/Projects/reddot/src/app/login/page.tsx) | Added blurred, breathing `core-orb.jpeg` background and updated tagline to "Your cycle, private by design." |
+| [signup/page.tsx](file:///c:/Projects/reddot/src/app/signup/page.tsx) | Added blurred, breathing `core-orb.jpeg` background and updated tagline to "Your cycle, private by design." |
+| [dashboard/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/page.tsx) | Set greeting header to display face, enabled `PhaseRing` animation, styled quick actions, and wrapped AI insight in disclosure block. |
+| [ChatPageContent.tsx](file:///c:/Projects/reddot/src/components/ai/ChatPageContent.tsx) | Rebuilt chat browser chrome, restyled message bubbles with avatars/labels, styled history timeline, and updated inputs and disclaimer. |
+| [know/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/know/page.tsx) | Integrated phase orb thumbnails, tag borders, active-phase dot status, and search input states. |
+
+#### Verification
+All 27 routes compile successfully with zero TypeScript compilation errors and production builds successfully.
+
+---
+
 ## Session 7: Landing Page Overhaul, Scroll Pinning Alignment, compressed ranges, and Scrolling Marquee (2026-07-09)
 
 ### What was done

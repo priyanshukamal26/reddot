@@ -45,7 +45,7 @@ async function run() {
 
   try {
     console.log("Creating 'users' table...");
-    await sql(`
+    await sql.query(`
       CREATE TABLE IF NOT EXISTS users (
         id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         email         TEXT UNIQUE NOT NULL,
@@ -56,7 +56,7 @@ async function run() {
     `);
 
     console.log("Creating 'user_meta' table...");
-    await sql(`
+    await sql.query(`
       CREATE TABLE IF NOT EXISTS user_meta (
         user_id           UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
         salt              TEXT NOT NULL,
@@ -67,7 +67,7 @@ async function run() {
     `);
 
     console.log("Creating 'encrypted_blobs' table...");
-    await sql(`
+    await sql.query(`
       CREATE TABLE IF NOT EXISTS encrypted_blobs (
         id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -80,7 +80,7 @@ async function run() {
     `);
 
     console.log("Creating 'report_analysis_events' table...");
-    await sql(`
+    await sql.query(`
       CREATE TABLE IF NOT EXISTS report_analysis_events (
         id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

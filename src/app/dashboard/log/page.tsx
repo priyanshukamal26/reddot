@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { SYMPTOM_OPTIONS } from "@/lib/types";
 import type { FlowIntensity, DailyEntry } from "@/lib/types";
-import { saveEntry, loadEntryByDate, saveCycle, loadAllCycles } from "@/lib/data";
+import { saveEntry, loadEntryByDate, loadAllCycles, recalculateCycles } from "@/lib/data";
 import { generateId } from "@/lib/utils";
 import { X, Calendar, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -216,10 +216,7 @@ export default function DailyLogPage() {
       };
 
       await saveEntry(entry);
-
-      if (periodFlag) {
-        await maybeCreateCycle(date);
-      }
+      await recalculateCycles();
 
       setEntryId(entry.entryId);
       setSaved(true);
@@ -480,31 +477,4 @@ export default function DailyLogPage() {
 // starts a new cycle (i.e., yesterday wasn't a period day)
 // ──────────────────────────────────────────────
 
-async function maybeCreateCycle(date: string) {
-  try {
-    let startDate = date;
-    const checkDate = new Date(date);
 
-    for (let i = 0; i < 10; i++) {
-      checkDate.setDate(checkDate.getDate() - 1);
-      const checkDateStr = checkDate.toISOString().split("T")[0];
-      const prevEntry = await loadEntryByDate(checkDateStr);
-      if (prevEntry?.periodFlag) {
-        startDate = checkDateStr;
-      } else {
-        break;
-      }
-    }
-
-    const allCycles = await loadAllCycles();
-    const existingCycle = allCycles.find((c) => c.startDate === startDate);
-    if (!existingCycle) {
-      await saveCycle({
-        cycleId: generateId(),
-        startDate,
-      });
-    }
-  } catch (err) {
-    console.error("Failed to check/create cycle:", err);
-  }
-}

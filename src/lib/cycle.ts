@@ -96,11 +96,20 @@ export function getCurrentPhase(
   const cycleLength = stats?.averageLength ?? DEFAULT_CYCLE_LENGTH;
   const confidence: PredictionConfidence = stats?.confidence ?? "regular";
 
-  const startDate = new Date(lastCycleStart);
-  const daysSinceStart = Math.floor(
-    (today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+  const y1 = today.getFullYear();
+  const m1 = today.getMonth();
+  const d1 = today.getDate();
+  const todayLocalMidnight = new Date(y1, m1, d1).getTime();
+
+  const [y2, m2, d2] = lastCycleStart.split("-").map(Number);
+  const startLocalMidnight = new Date(y2, m2 - 1, d2).getTime();
+
+  const daysSinceStart = Math.round(
+    (todayLocalMidnight - startLocalMidnight) / (1000 * 60 * 60 * 24)
   );
-  const cycleDay = (daysSinceStart % cycleLength) + 1;
+  
+  // If for some reason the start date is in the future, fallback to day 1
+  const cycleDay = daysSinceStart >= 0 ? (daysSinceStart % cycleLength) + 1 : 1;
 
   // Phase boundaries scaled to cycle length
   const menstrualEnd = DEFAULT_MENSTRUAL_DAYS;

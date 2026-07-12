@@ -1,6 +1,26 @@
 # RedDot — Build Walkthrough
 
-## Session 8: Authenticated Product Visual and Component-Layer Overhaul (2026-07-10)
+## Session 9: Cycle Generation Hardening and Dashboard UI Refinements (2026-07-12)
+
+### What was done
+
+**Hardened the cycle derivation engine** to dynamically group periods, fuzzy-match existing cycles (preserving manual notes), and garbage-collect stale cycles, fixing timezone drifting issues. **Overhauled the Dashboard Hero** to include a new personalized RedDot.ai Engine insights panel alongside the Phase Ring.
+
+#### Modified files
+
+| File | Changes |
+|------|---------|
+| [data.ts](file:///c:/Projects/reddot/src/lib/data.ts) | Implemented `recalculateCycles()` to replace rigid cycle creation with dynamic period grouping, fuzzy matching (+/- 5 days) to preserve manual notes, and automated garbage collection of ghost cycles. Exposed `deleteCycle`. |
+| [cycle.ts](file:///c:/Projects/reddot/src/lib/cycle.ts) | Rewrote `getCurrentPhase` math to compute differences using local midnight timestamps, permanently fixing the UTC timezone-drifting bug. |
+| [dashboard/log/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/log/page.tsx) | Swapped `maybeCreateCycle` with the robust `recalculateCycles()` on entry save. |
+| [dashboard/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/page.tsx) | Relocated Phase Ring to the left; added RedDot.ai Engine daily biological insights panel to the right. Added `recalculateCycles()` on mount for auto-healing. |
+| [dashboard/insights/page.tsx](file:///c:/Projects/reddot/src/app/dashboard/insights/page.tsx) | Redesigned the "Log Today" and "Insights" cards with a horizontal checklist format, glassmorphic hover effects, and mini stats preview showing Avg Mood/Sleep. |
+| [DayDetail.tsx](file:///c:/Projects/reddot/src/components/tracking/DayDetail.tsx) | Added a subtle red gradient background and "Period" tag indicator for logged period days. |
+| [onboarding/page.tsx](file:///c:/Projects/reddot/src/app/onboarding/page.tsx) | Wrapped the onboarding flow in `AuthGuard` to seamlessly redirect users to the login screen upon session timeout or encryption key loss. |
+| [04_DATA_MODEL.md](file:///c:/Projects/reddot/docs/04_DATA_MODEL.md) | Formally documented the client-side cycle calculation, fuzzy matching, and garbage collection algorithm. |
+| [06_PAGES_AND_FLOWS.md](file:///c:/Projects/reddot/docs/06_PAGES_AND_FLOWS.md) | Updated layout specs for the new Dashboard hero AI report and Onboarding AuthGuard redirect logic. |
+
+---## Session 8: Authenticated Product Visual and Component-Layer Overhaul (2026-07-10)
 
 ### What was done
 

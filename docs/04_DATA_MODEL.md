@@ -159,3 +159,10 @@ type Chat = {
 ```
 
 These types are the contract between the encryption layer, IndexedDB layer, and the UI — keep them stable; both 06_PAGES_AND_FLOWS.md and 08_AI_PROMPTS_AND_LOGIC.md assume this shape when describing what data feeds into screens and AI prompts.
+
+## Cycle Derivation Logic (Client-side)
+
+Cycles are dynamically inferred from `DailyEntry` records where `periodFlag: true`. Instead of relying on a rigid, error-prone creation at the time of logging, the client runs a `recalculateCycles()` function.
+- **Auto-healing:** On dashboard load or entry save, the app fetches all logged period days, sorts them, and groups them into contiguous cycle blocks (periods separated by more than 10 days are treated as new cycles).
+- **Fuzzy Matching for Preservation:** If a cycle's start date shifts by a few days (e.g. user corrects a mistakenly logged day), the algorithm looks for an existing cycle within a +/- 5 day window. If found, it updates its `startDate` rather than deleting it. This preserves any user-added manual `notes`, `endDate`, or `flowDetails`.
+- **Garbage Collection:** "Ghost" or empty cycle records that no longer match any logged period days and contain no manual notes are automatically purged to prevent false Phase 1 states.

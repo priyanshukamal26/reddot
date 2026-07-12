@@ -21,7 +21,7 @@
 | 6 | **Onboarding: privacy model intro** | One screen, plain language, "your data stays on your device unless you choose otherwise." |
 | 7 | **Onboarding: cycle basics** | Last period start date, typical cycle length, explicit "irregular / not sure" option. |
 | 8 | **Onboarding: sync choice** | Local-only vs cloud sync, explained with the trade-off (not a dark-pattern default toward sync). |
-| 9 | **Onboarding: complete / first insight** | Shows the first phase-ring prediction immediately — the "aha" moment before dropping into the dashboard. |
+| 9 | **Onboarding: complete / first insight** | Shows the first phase-ring prediction immediately — the "aha" moment before dropping into the dashboard. Protected by AuthGuard to gracefully redirect to login if session expires during setup. |
 
 ### Core app (post-login) — organized under the new pill nav
 
@@ -29,7 +29,7 @@ The post-login app is organized into three pill-nav destinations plus the profil
 
 | # | Page | Lives under | Purpose |
 |---|---|---|---|
-| 10 | **Dashboard / Home** | (default landing screen after login, sits "before" the three pills) | Phase-ring, today's quick-log entry point, last-backup indicator, AI insight preview. |
+| 10 | **Dashboard / Home** | (default landing screen after login, sits "before" the three pills) | Hero section contains the Phase-ring alongside an AI-generated daily biological insight report. Below it: today's quick-log checklist, cycle heatmap, and summary stats. |
 | 11 | **Daily log** | Tracking | Mood, symptoms, sleep/energy/appetite/exercise, journal. |
 | 12 | **Cycle Tracker view** | Tracking | The creative calendar/contribution-graph-style cycle history — see "Tracking" detail below. |
 | 13 | **Day detail** | Tracking | Read view of a specific day's full log (popup/slide-up panel). |

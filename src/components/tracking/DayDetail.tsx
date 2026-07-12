@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { loadEntryByDate } from "@/lib/data";
 import type { DailyEntry } from "@/lib/types";
-import { Bed, Zap, Utensils, Dumbbell, X } from "lucide-react";
+import { Bed, Zap, Utensils, Dumbbell, X, Droplets } from "lucide-react";
 
 interface DayDetailProps {
   isOpen: boolean;
@@ -137,12 +137,23 @@ export default function DayDetail({ isOpen, onClose, date }: DayDetailProps) {
                     if (isLeft) setActiveDateStr(prevDateStr);
                     if (isRight) setActiveDateStr(nextDateStr);
                   }}
-                  className={`absolute w-[360px] max-w-[85vw] h-[550px] bg-[rgba(20,20,22,0.8)] backdrop-blur-xl border border-white/5 rounded-3xl p-6 overflow-y-auto hidden-scrollbar flex flex-col shadow-2xl ${isCenter ? 'cursor-default border-[#e51d38]/20 shadow-[0_0_40px_rgba(229,29,56,0.1)]' : 'cursor-pointer hover:border-white/20 transition-colors'}`}
+                  className={`absolute w-[360px] max-w-[85vw] h-[550px] bg-[rgba(20,20,22,0.8)] backdrop-blur-xl border border-white/5 rounded-3xl p-6 overflow-y-auto hidden-scrollbar flex flex-col shadow-2xl ${
+                    isCenter ? 'cursor-default border-[#e51d38]/20 shadow-[0_0_40px_rgba(229,29,56,0.1)]' : 'cursor-pointer hover:border-white/20 transition-colors'
+                  } ${
+                    entry?.periodFlag ? 'bg-gradient-to-b from-[#e51d38]/10 to-transparent border-[#e51d38]/30 shadow-[0_0_30px_rgba(229,29,56,0.15)]' : ''
+                  }`}
                 >
                   <div className="flex justify-between items-start mb-6 shrink-0">
-                    <h2 className="text-xl font-bold text-white tracking-tight">
-                      {new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-                    </h2>
+                    <div>
+                      <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                        {new Date(d + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+                      </h2>
+                      {entry?.periodFlag && (
+                        <div className="mt-1 flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-[#e51d38] font-mono">
+                          <Droplets className="w-3 h-3" /> Period
+                        </div>
+                      )}
+                    </div>
                     {isCenter && (
                       <div className="flex gap-2">
                         <button onClick={() => router.push(`/dashboard/log?date=${d}`)} className="px-3 py-1 -mt-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] text-gray-300 hover:text-white transition-colors z-50 font-mono uppercase tracking-widest flex items-center justify-center">

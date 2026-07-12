@@ -6,6 +6,7 @@ import { useAuth } from "@/context/auth-context";
 import { saveCycle, saveMeta, loadMeta } from "@/lib/data";
 import { generateId } from "@/lib/utils";
 import type { Cycle } from "@/lib/types";
+import AuthGuard from "@/components/auth/AuthGuard";
 
 // ──────────────────────────────────────────────
 // Onboarding Flow (Pages 6–9 from 06_PAGES_AND_FLOWS.md)
@@ -88,14 +89,15 @@ export default function OnboardingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-void flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* ── Progress indicator ── */}
-        <div className="flex gap-2 mb-8">
-          {(["privacy", "cycle", "sync", "complete"] as OnboardingStep[]).map(
-            (s, i) => (
-              <div
-                key={s}
+    <AuthGuard requireOnboarding={false}>
+      <main className="min-h-screen bg-void flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* ── Progress indicator ── */}
+          <div className="flex gap-2 mb-8">
+            {(["privacy", "cycle", "sync", "complete"] as OnboardingStep[]).map(
+              (s, i) => (
+                <div
+                  key={s}
                 className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
                   (["privacy", "cycle", "sync", "complete"] as OnboardingStep[]).indexOf(step) >= i
                     ? "bg-signal"
@@ -317,6 +319,7 @@ export default function OnboardingPage() {
           </div>
         )}
       </div>
-    </main>
+      </main>
+    </AuthGuard>
   );
 }

@@ -154,6 +154,11 @@ export async function saveCycle(cycle: Cycle): Promise<void> {
   await syncIfEnabled();
 }
 
+export async function deleteCycle(cycleId: string): Promise<void> {
+  await db.deleteCycle(cycleId);
+  await syncIfEnabled();
+}
+
 export async function loadAllCycles(): Promise<Cycle[]> {
   const key = getKey();
   const records = await db.getAllCycles();
@@ -172,6 +177,97 @@ export async function loadAllCycles(): Promise<Cycle[]> {
     })
   );
   return decoded.filter((c): c is Cycle => c !== null);
+}
+
+export async function recalculateCycles(): Promise<void> {
+  const allEntries = await loadAllEntries();
+  const periodDays = allEntries
+    .filter((e) => e.periodFlag)
+    .map((e) => e.date)
+    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+  const computedStartDates = new Set<string>();
+
+  if (periodDays.length > 0) {
+    let currentStart = periodDays[0];
+    computedStartDates.add(currentStart);
+
+    for (let i = 1; i < periodDays.length; i++) {
+      const prev = new Date(periodDays[i - 1]);
+      const curr = new Date(periodDays[i]);
+      const diffDays = Math.round((curr.getTime() - prev.getTime()) / 86400000);
+
+      if (diffDays > 3) {
+        currentStart = periodDays[i];
+        computedStartDates.add(currentStart);
+      }
+    }
+  }
+
+  const existingCycles = await loadAllCycles();
+  let changed = false;
+  const matchedCycleIds = new Set<string>();
+
+  for (const start of computedStartDates) {
+    const startMs = new Date(start).getTime();
+    
+    let closestCycle = null;
+    let minDiff = Infinity;
+    
+    for (const c of existingCycles) {
+      if (matchedCycleIds.has(c.cycleId)) continue;
+      
+      const cMs = new Date(c.startDate).getTime();
+      const diff = Math.abs(cMs - startMs) / 86400000;
+      
+      if (diff <= 5 && diff < minDiff) {
+        closestCycle = c;
+        minDiff = diff;
+      }
+    }
+    
+    if (closestCycle) {
+      matchedCycleIds.add(closestCycle.cycleId);
+      if (closestCycle.startDate !== start) {
+        closestCycle.startDate = start;
+        const key = getKey();
+        const { cycleId, startDate, ...payload } = closestCycle;
+        const encrypted = await encryptJSON(key, payload);
+        await db.putCycle({
+          cycle_id: cycleId,
+          start_date: startDate,
+          encrypted_payload: encrypted.ciphertext,
+          iv: encrypted.iv,
+        });
+        changed = true;
+      }
+    } else {
+      const key = getKey();
+      const encrypted = await encryptJSON(key, {});
+      await db.putCycle({
+        cycle_id: generateId(),
+        start_date: start,
+        encrypted_payload: encrypted.ciphertext,
+        iv: encrypted.iv,
+      });
+      changed = true;
+    }
+  }
+
+  for (const c of existingCycles) {
+    if (!matchedCycleIds.has(c.cycleId)) {
+      if (c.notes || c.endDate || c.flowDetails) {
+        // Keep it to preserve user data
+      } else {
+        await db.deleteCycle(c.cycleId);
+        changed = true;
+      }
+    }
+  }
+
+  if (changed) {
+    await syncIfEnabled();
+  }
 }
 
 // ──────────────────────────────────────────────

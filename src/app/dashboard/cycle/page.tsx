@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import CycleHeatmap from "@/components/tracking/CycleHeatmap";
+import CalendarView from "@/components/tracking/CalendarView";
 import DayDetail from "@/components/tracking/DayDetail";
 import { loadAllEntries, loadEntryByDate } from "@/lib/data";
 import type { DailyEntry } from "@/lib/types";
@@ -82,10 +82,10 @@ export default function CycleViewPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-paper">Cycle history</h1>
         <div className="flex gap-1 bg-ash rounded-md p-0.5">
-          <button className="px-3 py-1 text-xs font-medium text-paper bg-signal/20 rounded-md">
+          <button className="px-3 py-1 text-xs font-medium text-fog hover:text-paper rounded-md transition-colors">
             Heatmap
           </button>
-          <button className="px-3 py-1 text-xs font-medium text-fog hover:text-paper rounded-md transition-colors">
+          <button className="px-3 py-1 text-xs font-medium text-paper bg-signal/20 rounded-md">
             Calendar
           </button>
         </div>
@@ -98,9 +98,8 @@ export default function CycleViewPage() {
           </p>
         </div>
       ) : (
-        <CycleHeatmap
+        <CalendarView
           data={heatmapData}
-          months={6}
           onDayClick={handleDayClick}
         />
       )}

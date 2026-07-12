@@ -96,7 +96,7 @@ export async function loadAllEntries(): Promise<DailyEntry[]> {
       try {
         return await decryptEntry(key, r);
       } catch (err) {
-        console.error(`Failed to decrypt daily entry ${r.entry_id}:`, err);
+        console.warn(`Failed to decrypt daily entry ${r.entry_id}:`, err);
         return null;
       }
     })
@@ -115,7 +115,7 @@ export async function loadEntriesInRange(
       try {
         return await decryptEntry(key, r);
       } catch (err) {
-        console.error(`Failed to decrypt daily entry ${r.entry_id} in range:`, err);
+        console.warn(`Failed to decrypt daily entry ${r.entry_id} in range:`, err);
         return null;
       }
     })
@@ -166,7 +166,7 @@ export async function loadAllCycles(): Promise<Cycle[]> {
         );
         return { cycleId: r.cycle_id, startDate: r.start_date, ...payload };
       } catch (err) {
-        console.error(`Failed to decrypt cycle record ${r.cycle_id}:`, err);
+        console.warn(`Failed to decrypt cycle record ${r.cycle_id}:`, err);
         return null;
       }
     })
@@ -231,7 +231,7 @@ export async function loadAllChats(): Promise<Chat[]> {
           messages: payload.messages,
         };
       } catch (err) {
-        console.error(`Failed to decrypt chat record ${r.chat_id}:`, err);
+        console.warn(`Failed to decrypt chat record ${r.chat_id}:`, err);
         return null;
       }
     })

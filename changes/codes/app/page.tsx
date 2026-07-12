@@ -1,52 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/auth-context';
 
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const router = useRouter();
-  const { login, isAuthenticated, onboardingDone } = useAuth();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      if (onboardingDone) {
-        router.replace("/dashboard");
-      } else {
-        router.replace("/onboarding");
-      }
-    }
-  }, [isAuthenticated, onboardingDone, router]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeTab === 'signup') {
-      router.push('/signup');
-      return;
-    }
-
-    setError("");
-    setLoading(true);
-
-    try {
-      await login(email, password);
-      router.push("/dashboard");
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to sign in. Please check your password and try again."
-      );
-      setLoading(false);
-    }
+    router.push('/dashboard');
   };
 
   return (
@@ -60,7 +26,7 @@ export default function LoginPage() {
           className="absolute inset-0"
         >
           <Image
-            src="/assets/images/signup_page_image.jpeg"
+            src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop"
             alt="Abstract Red and Black Liquid"
             fill
             className="object-cover"
@@ -125,8 +91,6 @@ export default function LoginPage() {
               <label className="block text-sm text-gray-400 mb-2">Email</label>
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
                 className="w-full bg-transparent border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#e51d38] transition-colors"
                 required
@@ -136,17 +100,11 @@ export default function LoginPage() {
               <label className="block text-sm text-gray-400 mb-2">Password</label>
               <input
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••"
                 className="w-full bg-transparent border border-white/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#e51d38] transition-colors"
                 required
               />
             </div>
-            
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
-            )}
             
             <div className="flex justify-between items-center text-sm">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
@@ -156,10 +114,9 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
-              className="w-full bg-[#e51d38] hover:bg-[#c0142b] text-white rounded-xl py-4 font-medium tracking-wide transition-colors disabled:opacity-50"
+              className="w-full bg-[#e51d38] hover:bg-[#c0142b] text-white rounded-xl py-4 font-medium tracking-wide transition-colors"
             >
-              {loading ? (activeTab === 'login' ? 'SIGNING IN...' : 'CREATING ACCOUNT...') : (activeTab === 'login' ? 'SIGN IN' : 'CREATE ACCOUNT')}
+              {activeTab === 'login' ? 'SIGN IN' : 'CREATE ACCOUNT'}
             </button>
           </form>
 

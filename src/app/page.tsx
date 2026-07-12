@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import DecryptReveal from "@/components/layout/DecryptReveal";
 import PhaseRing from "@/components/tracking/PhaseRing";
+import { useAuth } from '@/context/auth-context';
 
 // Assets referenced via static public URLs (copied from src/assets to public/assets on prebuild)
 const heroSignalBloom = "/assets/video/hero-signal-bloom.mp4";
@@ -67,6 +68,7 @@ if (typeof window !== "undefined") {
 const sectionIds = ["section-1", "section-2", "section-3", "section-4", "section-5"];
 
 export default function Home() {
+  const { isAuthenticated } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -427,30 +429,7 @@ export default function Home() {
 
 
       {/* ── 4.3 Scroll Wayfinding Progress Rail (Desktop only) ── */}
-      <div className="fixed right-10 top-1/2 -translate-y-1/2 z-40 hidden md:flex items-center gap-4">
-        <div className="flex flex-col gap-8 items-center relative py-4">
-          <div className="absolute top-4 bottom-4 w-[1px] bg-void-border">
-            <div
-              className="w-[1px] bg-signal-500 absolute top-0 transition-all duration-300 ease-out"
-              style={{ height: `${(activeSection / 4) * 100}%` }}
-            />
-          </div>
-          {[0, 1, 2, 3, 4].map((index) => (
-            <button
-              key={index}
-              onClick={() => scrollToSection(index)}
-              aria-label={`Scroll to Section 0${index + 1}`}
-              className={`font-mono text-[10px] w-7 h-7 rounded-full flex items-center justify-center bg-void-950 border z-10 transition-all duration-300 interactive-hover focus-visible:outline ${
-                activeSection === index
-                  ? "border-signal-500 text-signal-500 scale-110 font-bold"
-                  : "border-void-border text-ink-500 hover:border-ink-700 hover:text-paper-50"
-              }`}
-            >
-              0{index + 1}
-            </button>
-          ))}
-        </div>
-      </div>
+
 
       {/* ── Smooth Scroll Wrapping Structure ── */}
       <div id="smooth-wrapper" className="w-full">
@@ -480,37 +459,47 @@ export default function Home() {
               </button>
 
               {/* Navigation Links for Desktop */}
-              <div className="hidden md:flex items-center gap-8">
+              <div className="hidden md:flex items-center gap-2 bg-void-900/50 backdrop-blur-md p-1.5 rounded-full border border-void-border/50">
                 <button
                   onClick={() => scrollToSection(1)}
-                  className="text-[10px] font-mono tracking-widest text-ink-500 hover:text-paper-50 transition-colors uppercase cursor-pointer interactive-hover"
+                  className="px-4 py-2 text-[10px] font-mono tracking-widest text-ink-500 hover:text-paper-50 hover:bg-white/5 transition-all uppercase cursor-pointer rounded-full"
                 >
                   Trust Model
                 </button>
                 <button
                   onClick={() => scrollToSection(2)}
-                  className="text-[10px] font-mono tracking-widest text-ink-500 hover:text-paper-50 transition-colors uppercase cursor-pointer interactive-hover"
+                  className="px-4 py-2 text-[10px] font-mono tracking-widest text-ink-500 hover:text-paper-50 hover:bg-white/5 transition-all uppercase cursor-pointer rounded-full"
                 >
                   Cycle Phases
                 </button>
                 <button
                   onClick={() => scrollToSection(3)}
-                  className="text-[10px] font-mono tracking-widest text-ink-500 hover:text-paper-50 transition-colors uppercase cursor-pointer interactive-hover"
+                  className="px-4 py-2 text-[10px] font-mono tracking-widest text-ink-500 hover:text-paper-50 hover:bg-white/5 transition-all uppercase cursor-pointer rounded-full"
                 >
                   RedDot.ai
                 </button>
+                <div className="w-[1px] h-4 bg-void-border mx-2" />
                 <Link
                   href="/login"
-                  className="text-[10px] font-mono tracking-widest text-ink-500 hover:text-paper-50 transition-colors uppercase interactive-hover"
+                  className="px-4 py-2 text-[10px] font-mono tracking-widest text-ink-500 hover:text-paper-50 hover:bg-white/5 transition-all uppercase rounded-full"
                 >
                   Sign In
                 </Link>
-                <Link
-                  href="/signup"
-                  className="px-4 py-2 border border-signal-500 text-[10px] font-mono tracking-widest text-signal-500 hover:bg-signal-500 hover:text-paper-50 transition-all rounded-[--radius-sm] uppercase interactive-hover shadow-[4px_4px_0px_rgba(224,16,40,0.2)]"
-                >
-                  Join RedDot
-                </Link>
+                {isAuthenticated ? (
+                  <Link
+                    href="/dashboard"
+                    className="px-5 py-2 bg-[#e51d38] hover:bg-[#c0142b] text-[10px] font-bold font-mono tracking-widest text-white transition-all rounded-full uppercase"
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <Link
+                    href="/signup"
+                    className="px-5 py-2 bg-[#e51d38] hover:bg-[#c0142b] text-[10px] font-bold font-mono tracking-widest text-white transition-all rounded-full uppercase"
+                  >
+                    Join RedDot
+                  </Link>
+                )}
               </div>
             </header>
 
@@ -541,12 +530,21 @@ export default function Home() {
                 >
                   Sign In
                 </Link>
-                <Link
-                  href="/signup"
-                  className="text-center w-full px-6 py-3 bg-signal-500 text-sm font-mono tracking-widest text-paper-50 rounded-[--radius-sm] uppercase mt-4"
-                >
-                  Join RedDot
-                </Link>
+                {isAuthenticated ? (
+                  <Link
+                    href="/dashboard"
+                    className="text-center w-full px-6 py-3 bg-signal-500 text-sm font-mono tracking-widest text-paper-50 rounded-[--radius-sm] uppercase mt-4"
+                  >
+                    Dashboard
+                  </Link>
+                ) : (
+                  <Link
+                    href="/signup"
+                    className="text-center w-full px-6 py-3 bg-signal-500 text-sm font-mono tracking-widest text-paper-50 rounded-[--radius-sm] uppercase mt-4"
+                  >
+                    Join RedDot
+                  </Link>
+                )}
               </div>
             )}
 
@@ -558,14 +556,17 @@ export default function Home() {
                   loop
                   muted
                   playsInline
+                  poster="/assets/images/hero_signal_bloom_initial.jpeg"
                   onError={() => setVideoError(true)}
                   className="w-full h-full object-cover opacity-70 transition-opacity duration-1000"
                 >
                   <source src={heroSignalBloom} type="video/mp4" />
                 </video>
               ) : (
-                // Beautiful warm dark-gradient fallback before mounting or on failure
-                <div className="w-full h-full bg-gradient-to-tr from-void-950 via-void-900 to-void-950 opacity-100" />
+                <div 
+                  className="w-full h-full opacity-70 bg-cover bg-center"
+                  style={{ backgroundImage: 'url(/assets/images/hero_signal_bloom_initial.jpeg)' }}
+                />
               )}
               {/* Mega Watermark Glyph */}
               <div className="text-mega absolute left-[-4vw] bottom-[-2vw] text-paper-50 opacity-4 select-none pointer-events-none">
@@ -618,6 +619,19 @@ export default function Home() {
                     className="px-6 py-3.5 border border-void-border bg-void-900/40 text-paper-50 hover:bg-void-800/50 hover:border-ink-500 transition-colors rounded-[--radius-sm] text-xs font-semibold uppercase tracking-wider interactive-hover"
                   >
                     Explore the Trust Model
+                  </button>
+                  <button 
+                    onClick={() => {
+                      const video = document.querySelector('video');
+                      if (video) {
+                        if (video.paused) video.play();
+                        else video.pause();
+                        setIsScramblePlaying(!video.paused);
+                      }
+                    }}
+                    className="p-3.5 border border-void-border bg-void-900/40 text-paper-50 hover:bg-void-800/50 transition-colors rounded-[--radius-sm] interactive-hover"
+                  >
+                    {isScramblePlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                   </button>
                 </div>
               </div>

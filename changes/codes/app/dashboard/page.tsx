@@ -3,58 +3,8 @@
 import { motion } from 'motion/react';
 import { Pen, Calendar, TrendingUp, Send, BrainCircuit, Droplets, Smile, FileText } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { loadAllCycles, loadAllEntries, loadEntryByDate } from '@/lib/data';
-import CycleHeatmap from '@/components/tracking/CycleHeatmap';
-import { calculateCycleStats, getCurrentPhase } from '@/lib/cycle';
-import type { CyclePhaseInfo } from '@/lib/types';
 
 export default function TrackingPage() {
-  const router = useRouter();
-  const [phaseInfo, setPhaseInfo] = useState<CyclePhaseInfo | null>(null);
-  const [heatmapData, setHeatmapData] = useState<any[]>([]);
-  const [aiQuery, setAiQuery] = useState('');
-  const [todayLog, setTodayLog] = useState({ period: false, mood: false, logs: false });
-
-  useEffect(() => {
-    async function fetchPhase() {
-      try {
-        const cycles = await loadAllCycles();
-        if (cycles.length > 0) {
-          const sorted = [...cycles].sort(
-            (a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-          );
-          const stats = calculateCycleStats(cycles);
-          const currentPhase = getCurrentPhase(sorted[0].startDate, stats);
-          setPhaseInfo(currentPhase);
-        }
-
-        const todayStr = new Date().toISOString().split('T')[0];
-        const todayEntry = await loadEntryByDate(todayStr);
-        if (todayEntry) {
-          setTodayLog({
-            period: todayEntry.periodFlag,
-            mood: todayEntry.mood !== undefined,
-            logs: todayEntry.symptoms.length > 0 || !!todayEntry.notes,
-          });
-        }
-
-        const entries = await loadAllEntries();
-        const transformedData = entries.map((entry) => ({
-          date: entry.date,
-          periodFlag: entry.periodFlag,
-          flowIntensity: entry.flowIntensity,
-          symptomCount: entry.symptoms.length,
-          mood: entry.mood,
-        }));
-        setHeatmapData(transformedData);
-      } catch (err) {
-        console.error("Failed to load phase:", err);
-      }
-    }
-    fetchPhase();
-  }, []);
-
   return (
     <div className="max-w-5xl mx-auto h-full flex flex-col items-center justify-start pt-10">
       
@@ -105,27 +55,31 @@ export default function TrackingPage() {
             transition={{ delay: 0.5, duration: 0.8 }}
             className="text-6xl font-serif tracking-tighter mb-1"
           >
-            {phaseInfo ? String(phaseInfo.cycleDay).padStart(2, '0') : '--'}
+            04
           </motion.h2>
-          <p className="text-gray-400 text-sm tracking-wide mb-1">
-            {phaseInfo ? `Day ${phaseInfo.dayWithinPhase}` : 'No active cycle'}
-          </p>
-          <p className="text-[#e51d38] font-medium tracking-wide">
-            {phaseInfo ? phaseInfo.phase : 'Log a cycle to begin'}
-          </p>
+          <p className="text-gray-400 text-sm tracking-wide mb-1">Day 4 of 9</p>
+          <p className="text-[#e51d38] font-medium tracking-wide">Follicular Phase</p>
         </div>
 
+        {/* Technical Decorators */}
+        <div className="absolute -left-12 top-1/2 flex items-center gap-2 text-[10px] text-gray-500 font-mono">
+          <div className="w-8 h-[1px] bg-white/20" />
+          <span>75%</span>
+        </div>
+        <div className="absolute -right-12 top-[30%] flex items-center gap-2 text-[10px] text-gray-500 font-mono">
+          <span>29%</span>
+          <div className="w-8 h-[1px] bg-white/20" />
+        </div>
       </div>
 
       {/* Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full mb-6">
         {/* Log Today Card */}
         <motion.div 
-          onClick={() => router.push('/dashboard/log')}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-[rgba(20,20,22,0.6)] backdrop-blur-md border border-[rgba(255,255,255,0.05)] rounded-2xl p-5 relative overflow-hidden group hover:border-[#e51d38]/30 transition-colors cursor-pointer flex flex-col justify-between h-full"
+          className="bg-[rgba(20,20,22,0.6)] backdrop-blur-md border border-[rgba(255,255,255,0.05)] rounded-2xl p-5 relative overflow-hidden group hover:border-[#e51d38]/30 transition-colors"
         >
           <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#e51d38]/20 to-transparent" />
           <div className="flex justify-between items-start mb-6">
@@ -135,26 +89,14 @@ export default function TrackingPage() {
             </div>
             <Pen className="w-4 h-4 text-gray-500" />
           </div>
-          <div className="flex gap-4 mt-4">
-            <button className={`flex-1 aspect-square rounded-xl border flex items-center justify-center transition-colors ${
-              todayLog.period 
-                ? 'border-[#e51d38]/30 bg-[#e51d38]/5 text-[#e51d38] shadow-[0_0_15px_rgba(229,29,56,0.1)] hover:bg-[#e51d38]/10' 
-                : 'border-white/5 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-            }`}>
+          <div className="flex gap-4">
+            <button className="flex-1 aspect-square rounded-xl border border-[#e51d38]/30 bg-[#e51d38]/5 flex items-center justify-center text-[#e51d38] hover:bg-[#e51d38]/10 transition-colors shadow-[0_0_15px_rgba(229,29,56,0.1)]">
               <Droplets className="w-6 h-6" />
             </button>
-            <button className={`flex-1 aspect-square rounded-xl border flex items-center justify-center transition-colors ${
-              todayLog.mood 
-                ? 'border-[#e51d38]/30 bg-[#e51d38]/5 text-[#e51d38] shadow-[0_0_15px_rgba(229,29,56,0.1)] hover:bg-[#e51d38]/10' 
-                : 'border-white/5 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-            }`}>
+            <button className="flex-1 aspect-square rounded-xl border border-white/5 bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 hover:text-white transition-colors">
               <Smile className="w-6 h-6" />
             </button>
-            <button className={`flex-1 aspect-square rounded-xl border flex items-center justify-center transition-colors ${
-              todayLog.logs 
-                ? 'border-[#e51d38]/30 bg-[#e51d38]/5 text-[#e51d38] shadow-[0_0_15px_rgba(229,29,56,0.1)] hover:bg-[#e51d38]/10' 
-                : 'border-white/5 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
-            }`}>
+            <button className="flex-1 aspect-square rounded-xl border border-white/5 bg-white/5 flex items-center justify-center text-gray-400 hover:bg-white/10 hover:text-white transition-colors">
               <FileText className="w-6 h-6" />
             </button>
           </div>
@@ -162,11 +104,10 @@ export default function TrackingPage() {
 
         {/* Cycle View Card */}
         <motion.div 
-          onClick={() => router.push('/dashboard/cycle')}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-[rgba(20,20,22,0.6)] backdrop-blur-md border border-[rgba(255,255,255,0.05)] rounded-2xl p-5 group hover:border-[#e51d38]/30 transition-colors cursor-pointer flex flex-col justify-between h-full"
+          className="bg-[rgba(20,20,22,0.6)] backdrop-blur-md border border-[rgba(255,255,255,0.05)] rounded-2xl p-5 group hover:border-[#e51d38]/30 transition-colors"
         >
           <div className="flex justify-between items-start mb-6">
             <div>
@@ -175,18 +116,27 @@ export default function TrackingPage() {
             </div>
             <Calendar className="w-4 h-4 text-gray-500" />
           </div>
-          <div className="w-full opacity-90 pointer-events-none mt-2">
-            <CycleHeatmap data={heatmapData} months={1} />
+          {/* Heatmap Mock */}
+          <div className="grid grid-cols-10 gap-1.5 opacity-80">
+            {Array.from({ length: 30 }).map((_, i) => (
+              <div 
+                key={i} 
+                className={`w-full aspect-square rounded-sm ${
+                  i >= 12 && i <= 15 ? 'bg-[#e51d38] shadow-[0_0_8px_rgba(229,29,56,0.6)]' : 
+                  i >= 10 && i <= 17 ? 'bg-[#e51d38]/40' : 
+                  'bg-white/5'
+                }`}
+              />
+            ))}
           </div>
         </motion.div>
 
         {/* Insights Card */}
         <motion.div 
-          onClick={() => router.push('/dashboard/insights')}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-[rgba(20,20,22,0.6)] backdrop-blur-md border border-[rgba(255,255,255,0.05)] rounded-2xl p-5 group hover:border-[#e51d38]/30 transition-colors cursor-pointer flex flex-col justify-between h-full overflow-hidden relative"
+          className="bg-[rgba(20,20,22,0.6)] backdrop-blur-md border border-[rgba(255,255,255,0.05)] rounded-2xl p-5 group hover:border-[#e51d38]/30 transition-colors flex flex-col"
         >
           <div className="flex justify-between items-start mb-4">
             <div>
@@ -195,9 +145,9 @@ export default function TrackingPage() {
             </div>
             <TrendingUp className="w-4 h-4 text-gray-500" />
           </div>
-          {/* Simple SVG Chart */}
-          <div className="-mx-5 -mb-5 h-24 mt-8 opacity-60">
-            <svg className="w-full h-full" viewBox="0 0 100 40" preserveAspectRatio="none">
+          <div className="flex-grow flex items-end">
+            {/* Simple SVG Chart */}
+            <svg className="w-full h-16" viewBox="0 0 100 40" preserveAspectRatio="none">
               <path 
                 d="M0 30 Q 10 20, 20 25 T 40 15 T 60 20 T 80 5 T 100 10" 
                 fill="none" 
@@ -242,22 +192,10 @@ export default function TrackingPage() {
           <div className="relative w-full max-w-xl">
             <input 
               type="text" 
-              value={aiQuery}
-              onChange={(e) => setAiQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && aiQuery.trim()) {
-                  router.push(`/dashboard/ai?q=${encodeURIComponent(aiQuery)}`);
-                }
-              }}
               placeholder="Ask RedDot.ai..." 
               className="w-full bg-white/5 border border-white/10 rounded-full py-3 px-5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-white/20 transition-colors"
             />
-            <button 
-              onClick={() => {
-                if (aiQuery.trim()) router.push(`/dashboard/ai?q=${encodeURIComponent(aiQuery)}`);
-              }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-white transition-colors"
-            >
+            <button className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-white transition-colors">
               <Send className="w-4 h-4" />
             </button>
           </div>

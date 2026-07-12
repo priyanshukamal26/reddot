@@ -281,6 +281,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     nextAuthSignOut({ redirect: false });
   }, []);
 
+  // Inactivity Timeout (15 minutes)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let timeoutId: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      // 15 minutes = 15 * 60 * 1000 = 900000 ms
+      timeoutId = setTimeout(() => {
+        logout();
+        window.location.href = '/login?timeout=1';
+      }, 900000);
+    };
+
+    const events = ['mousemove', 'keydown', 'scroll', 'click', 'touchstart'];
+    
+    // Throttle the event listeners to avoid performance issues
+    let throttled = false;
+    const handleActivity = () => {
+      if (!throttled) {
+        resetTimer();
+        throttled = true;
+        setTimeout(() => { throttled = false; }, 1000); // 1 sec throttle
+      }
+    };
+
+    events.forEach(event => window.addEventListener(event, handleActivity));
+    resetTimer(); // start initial timer
+
+    return () => {
+      clearTimeout(timeoutId);
+      events.forEach(event => window.removeEventListener(event, handleActivity));
+    };
+  }, [isAuthenticated, logout]);
+
   const refreshMeta = useCallback(async () => {
     const freshMeta = await loadMeta();
     if (freshMeta) {

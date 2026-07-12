@@ -72,6 +72,15 @@ erase them.
 
 ## History Log (append-only, most recent at the top)
 
+[2026-07-12 21:35] — **Massive UI Overhaul, 3D Cycle Carousel, Daily Log Redesign & Critical Bug Fixes.** 
+- **Cycle View 3D Carousel:** Gutted the bottom-sheet drawer in `Cycle View` and replaced it with an interactive 3D glassmorphic carousel featuring fluid animations and precise localized timezone date-shifting fixes.
+- **Dashboard Polish:** Fixed the Insights SVG trend curve from cutting off, and updated the Log Today widget to correctly highlight the period icon and completion icons based on logged data. 
+- **Daily Log Redesign:** Transformed the `/dashboard/log` page into a centered glassmorphic modal with custom continuous scale sliders, unsaved changes tracking, and a warning dialog to prevent accidental data loss.
+- **RedDot.ai Seamless Handoff:** Added interception logic so queries typed directly into the Dashboard's AI search bar immediately route to `/dashboard/ai`, spawn a new chat, and auto-send without losing context.
+- **Critical Fixes:** Resolved an `OperationError` decryption crash that was breaking the Insights page by ensuring `crypto.ts` skips corrupted local IndexedDB records. Restored the cursor visibility that was hidden across the landing page.
+- **Security & Navigation:** Implemented a 15-minute inactivity auto-logout to secure user sessions. Swapped auth forms to use a local image, and updated global navigation header to properly link the logo and conditionally show "Dashboard" vs "Join RedDot".
+
+
 [2026-07-10 18:20] — **Vercel Deployment & Neon Migration Fixes.** Fixed Vercel build failures by updating `next.config.ts` to ignore ESLint (`ignoreDuringBuilds`) and TypeScript (`ignoreBuildErrors`) during production builds. Fixed `src/scripts/migrate.js` to use `sql.query()` instead of `sql()` to comply with the latest `@neondatabase/serverless` package syntax, resolving the internal server errors (`relation "user_meta" does not exist`) during login and registration. Project now deploys successfully on Vercel and connects correctly to the Neon database.
 
 [2026-07-09 23:10] — **Landing Page Overhaul, Scroll Pinning Alignment, compressed ranges, and Scrolling Marquee.** Rebuilt public landing page (src/app/page.tsx) and global styles (src/app/globals.css) to adhere to the RedDot Design System v2 specification. Resolved the background core-orb image alignment/scrolling issue by removing Tailwind v4 layout conflicts and inline style overrides, letting GSAP manage positioning. Resolved overlapping in Section 2 by adding vertical padding to Action Pills and reducing the bottom spacer height. Cleared double quotes from Section 2 heading and imported/rendered appropriate Lucide icons in Section 3's inline icon cluster. Vertically centered Section 3 scroll pinning by updating ScrollTrigger start to 'top 15%' and compressed the pinned scroll range by 25% (to +=1800px) with proportional midpoint adjustments. Created global keyframes for marquee in globals.css and added shrink-0 classes to marquee divs to enable seamless scrolling. Introduced custom SVG filter DecryptReveal component and copy-assets helper scripts. Production build is verified clean.
@@ -95,6 +104,8 @@ erase them.
 [2026-07-04 16:20] — Completed full reading pass of all 11 specification docs (00_README through 10_MVP_BUILD_PLAN). Comprehension verified: product is RedDot (menstrual health tracker), two core differentiators are (1) local-first encrypted architecture and (2) RedDot.ai's AI features. Navigation is pill nav (Tracking / RedDot.ai / Know + Profile popup). Naming: "RedDot" for the product, "RedDot.ai" only for the AI feature. Created this project_track.md. Next: begin Phase 0 scaffold.
 
 ## Doc Sync Notes
+
+[2026-07-12 21:35] — Updated `project_track.md` with History Log for recent UX polish and bug fixes. The internal `walkthrough.md` was also updated tracking the modal log page redesign, RedDot.ai handoff, and 15-minute timeouts.
 
 [2026-07-10 18:20] — Updated `project_track.md` and `README.md` to reflect Vercel deployment unblocking and Neon database migration syntax fixes.
 

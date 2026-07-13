@@ -1,32 +1,14 @@
-# RedDot — Menstrual Cycle Tracker & Community (Private by Design)
+# RedDot — Privacy-First Menstrual Health Tracker & Community
 
-> **Absolute Privacy. Premium Aesthetics. Zero-Knowledge Intelligence.**
+RedDot is a local-first, zero-knowledge menstrual health tracking and community platform. It is built to address real-world privacy concerns surrounding sensitive reproductive health telemetry by enforcing strict cryptographic boundaries. By keeping data encrypted client-side, RedDot ensures that users retain absolute sovereignty over their health logs, shielding them from third-party tracking, advertising profiling, and database breaches.
 
-RedDot is an Awwwards-grade, local-first menstrual health tracker and community platform built to bridge client-side zero-knowledge cryptography with top-tier visual craft. Engineered with a striking custom dark interface, scroll-driven canvas animations, and secure on-demand AI telemetry analysis, RedDot guarantees your intimate data remains yours.
-
-All health metrics, symptoms, moods, and discussion comments logged into RedDot are encrypted in your browser, stored locally in IndexedDB, and remain completely unreadable by third parties—including the host server and database.
+Plaintext data—including cycle dates, symptoms, mood details, chat histories, and community replies—never crosses the network.
 
 ---
 
-## 📖 Table of Contents
-1. [🔒 The Privacy Model & Security Architecture](#-the-privacy-model--security-architecture)
-2. [✨ Features & Modules](#-features--modules)
-   - [RedDot.ai Conversational Assistant](#reddotai-conversational-assistant)
-   - [RedConnect Social & Discussions Hub](#redconnect-social--discussions-hub)
-   - [Animated Phase Ring & Heatmaps](#animated-phase-ring--heatmaps)
-   - [Searchable Know Hub](#searchable-know-hub)
-3. [🎨 Design System & Micro-Animations](#-design-system--micro-animations)
-4. [🛠️ Technology Stack](#-technology-stack)
-5. [📂 Directory Layout](#-directory-layout)
-6. [🚀 Getting Started](#-getting-started)
-7. [⚡ Build & Verification](#-build--verification)
-8. [⚖️ Compliance & Compliance Notice](#-compliance--compliance-notice)
+## 🔒 Security Architecture & Cryptographic Verification
 
----
-
-## 🔒 The Privacy Model & Security Architecture
-
-RedDot is engineered around the principle of absolute cryptographic boundary controls.
+RedDot isolates all sensitive user data inside the client-side browser sandbox. The backend infrastructure functions purely as an optional, zero-knowledge backup and synchronization system.
 
 ```mermaid
 sequenceDiagram
@@ -36,149 +18,138 @@ sequenceDiagram
     participant Server as Sync Server (Next.js Node runtime)
     participant Database as Database (Neon Postgres)
 
-    User->>Browser: Enter Password & Log Data
-    Note over Browser: PBKDF2 Key Derivation (Salt + Password)<br/>Generates AES-GCM-256 Symmetric Key
-    Browser->>Browser: Encrypt Plaintext Log via AES-GCM-256
-    Browser->>Browser: Write Ciphertext to Local IndexedDB
-    Note over Browser: Cloud Sync Triggered (Optional)
-    Browser->>Server: Send Ciphertext + Auth Token
-    Note over Server: Server validates JWT session (cannot decrypt payload)
-    Server->>Database: Write Ciphertext Row
-    Note over Database: Data stored encrypted at rest
+    User->>Browser: Input credentials & log data
+    Note over Browser: PBKDF2 Key Derivation (Password + Local Salt)<br/>Generates AES-GCM-256 Symmetric Key
+    Browser->>Browser: Encrypt plaintext log payload via AES-GCM-256
+    Browser->>Browser: Save ciphertext to local IndexedDB
+    Note over Browser: If Cloud Sync is enabled
+    Browser->>Server: Transmit encrypted ciphertext & auth token
+    Note over Server: Server validates JWT session (payload remains encrypted)
+    Server->>Database: Write ciphertext record to table
+    Note over Database: Data stored encrypted at rest (plaintext keys never transmit)
 ```
 
-### Cryptographic Foundations
-1. **PBKDF2 Key Derivation**: Symmetric keys are derived locally in-browser using `PBKDF2-HMAC-SHA256` from the user's password, utilizing unique local salts.
-2. **AES-GCM-256 Encryption**: Every data payload (cycle dates, symptoms, mood details, flow metrics, past chat histories) is encrypted locally using the Web Crypto API (`SubtleCrypto.encrypt()`) before being written to IndexedDB.
-3. **Zero-Knowledge Cloud Sync**: Synchronization is entirely optional. When turned on, only the encrypted ciphertext payload and IV (Initialization Vector) are transmitted. The database only holds encrypted strings; plaintext keys never cross the network.
-4. **Session Key Isolation**: Encryption keys are cached temporarily in isolated `sessionStorage` during a logged-in session and cleared immediately upon logout or window closure.
+### Cryptographic Details
+* **Key Derivation (PBKDF2)**: Symmetric encryption keys are derived inside the browser sandbox using PBKDF2-HMAC-SHA256 from the user's password and a unique cryptographic salt stored in local metadata.
+* **Symmetric Encryption (AES-GCM-256)**: All user inputs (daily symptoms, mood logs, journal texts, and AI chat threads) are encrypted using AES-GCM-256 via the browser's Web Crypto API (`SubtleCrypto`).
+* **Sovereign Cloud Synchronization**: Users can toggle encrypted backup. The sync process uploads only ciphertext payloads and initialization vectors (IVs). The host database never stores or has access to decryption keys.
+* **In-Memory Session Isolation**: The derived decryption key is cached only in `sessionStorage` during active sessions. It is permanently cleared upon logging out or closing the browser tab.
 
 ---
 
-## ✨ Features & Modules
+## 🛠️ System Modules & Features
 
-### RedDot.ai Conversational Assistant
-An on-demand private health assistant that reads your local, decrypted telemetry to offer personalized advice.
-* **Structured Response Layout**: The assistant responds in a highly readable cards-and-points layout, complete with markdown category headers, bold highlights, and bulleted lists rather than walls of prose.
-* **Local-First Chat History**: Past conversations are encrypted client-side using `AES-GCM-256` and saved to IndexedDB, supporting sync, resume, and chat deletion to prevent list clutter.
-* **Automatic Title Summarization**: When starting a chat, a secondary, lightweight prompt summarizes your first question into a short, descriptive 2-4 word heading.
-* **Medical Lab Report OCR Scanner**: Upload PDF or image lab reports (blood panels, hormones). Text is parsed in-memory, summarized, and instantly discarded—with a visible deletion timestamp.
+### 1. Cycle Tracking & Phase Prediction
+* **Daily Logging**: Track period dates, flow intensity, mood scales, sleep hours, exercise metrics, and physical symptom chips.
+* **Phase Estimation**: Calculates and visualizes the menstrual cycle's four distinct phases (Menstrual, Follicular, Ovulation, Luteal).
+* **Irregular-Cycle Prediction**: Automatically adjusts prediction algorithms when log variances are detected, outputting logical confidence ranges instead of false-precise dates.
+* **Symptom Heatmaps**: A chronological tracking grid showing symptom density and cycle patterns over time.
+* **Log Date Guard**: Prevents logging data for future dates to maintain database integrity.
 
-### RedConnect Social & Discussions Hub
-A mini Reddit-style platform designed for pseudonymous, private discussions.
-* **Global Search Bar**: Search posts and usernames in real-time from the database across Saved, Own, and Global scopes, with instant loading feedback and empty states.
-* **Tabbed Navigation & Interactivity**: Easily switch feeds, publish posts with categories (`query`, `experience`, `suggestion`, `general`), like discussions, bookmark posts, and participate in nested threaded replies.
+### 2. RedDot.ai — Secure AI Assistant
+* **Contextual Health Assistant**: Queries the user's recent, decrypted local logs in-memory to provide relevant, private cycle observations.
+* **Structured Information Output**: Formats recommendations and observations using structured markdown categories and bolded list points for readability.
+* **Local-First Chat History**: Past conversation threads are encrypted client-side and saved in local storage. Features include past-chat deletion and automatic title generation based on the initial question.
+* **Lab Report Analyzer**: Uploads and processes blood tests or hormone panels in-memory. The text is parsed, summarized, and instantly deleted from server memory, showing a verified deletion timestamp.
 
-### Animated Phase Ring & Heatmaps
-* **Animated Phase Ring**: A continuous gradient-ramp ring dynamically drawn on a canvas using GSAP, sweeping from Menstrual (Signal Red) → Follicular (Muted Grey) → Ovulation (White Glow) → Luteal (Crimson Black).
-* **GitHub-Style Contribution Heatmap**: A contribution calendar where each cell represents a logged day. Color intensity maps to flow and symptom severity over time.
+### 3. RedConnect — Pseudonymous Social Hub
+* **Pseudonymous Board**: A secure forum for queries, suggestions, and health experiences.
+* **Global Search**: Instantly filters posts and usernames across Global, Saved, and Personal scopes using optimized database queries, featuring loading spinners and clean empty states.
+* **Interactivity**: Support for nested replies, likes, and saved bookmarks synced to user accounts.
 
-### Searchable Know Hub
-An educational database of articles and guides, complete with a search bar and active indicators matching your current cycle phase.
-
----
-
-## 🎨 Design System & Micro-Animations
-
-RedDot uses a high-fidelity visual palette tailored for smooth interaction:
-* **The "Void" Dark Theme**: Dark-mode primary layout (`#0A0A0A` background) paired with brand signal-red (`#E51D38`).
-* **The "Core Dot" Motif**: A breathing status dot representing system status, loading states, custom cursor focal points, and user avatars.
-* **Smooth Scrolling**: Lenis integration for comfortable page navigation.
+### 4. Know Hub
+* **Educational Library**: Medical disclaimed articles and guides organized by cycle phases, allowing users to read about physiological changes matching their current cycle status.
 
 ---
 
-## 🛠️ Technology Stack
+## 💻 Tech Stack
 
-* **Frontend**: Next.js 15+ (App Router, Turbopack, React Server Components)
-* **Styling**: Tailwind CSS v4, Vanilla CSS variables, and PostCSS
-* **Motion**: GSAP (GreenSock Animation Platform) and Lenis (Smooth Scroll)
-* **Storage**: IndexedDB (Local DB) with Neon PostgreSQL (remote sync)
-* **AI Processing**: Groq Llama-3-70B API
-* **Cryptography**: Web Crypto API (SubtleCrypto)
+* **Core Framework**: Next.js 15+ (App Router, Turbopack, React Server Components)
+* **Styling & Layout**: Tailwind CSS v4, PostCSS, and Vanilla CSS
+* **Animations**: GSAP (GreenSock) & Lenis (Smooth Scroll)
+* **Storage**: IndexedDB (local database) & Neon PostgreSQL (encrypted backup)
+* **Inference**: Groq (Llama 3.3 70B API)
+* **Encryption**: Web Crypto API (SubtleCrypto)
 
 ---
 
-## 📂 Directory Layout
+## 📂 Project Directory Structure
 
 ```
-├── docs/                      # Architectural specs & design guides
-├── public/                    # Compiled assets & static image resources
+├── docs/                      # Technical specifications & design references
+├── public/                    # Static assets & compiled images
 ├── src/
-│   ├── app/                   # App Router pages and API routes
-│   │   ├── dashboard/         # Authenticated layouts, logs, metrics, & Know Hub
-│   │   ├── login/ & signup/   # Auth pages wrapped in breathing core-orbs
-│   │   ├── api/               # API endpoint route handlers (sync, auth, AI)
-│   ├── components/            # UI components
-│   │   ├── ai/                # Chat layout, browser chrome, & message panels
-│   │   ├── layout/            # CoreDot, CursorAndGrain, & DecryptReveal
-│   │   ├── nav/               # PillNav & ProfilePopup backup control
-│   │   ├── tracking/          # PhaseRing canvas renderers & DayDetail panels
-│   ├── context/               # AuthContext managing key generation/persistence
-│   ├── lib/                   # Utility scripts
-│   │   ├── articles.ts        # Know Hub guide catalog
-│   │   ├── crypto.ts          # SubtleCrypto helper routines
-│   │   ├── cycle.ts           # Menstrual calculators and predictions
-│   │   ├── data.ts            # IndexedDB read/write wrappers
+│   ├── app/                   # Next.js App Router pages and API routes
+│   │   ├── dashboard/         # Dashboard pages, logs, and educational resources
+│   │   ├── login/ & signup/   # Authentication forms
+│   │   ├── api/               # Serverless API routes (sync, RedConnect, AI telemetry)
+│   ├── components/            # React UI components
+│   │   ├── ai/                # Chat panels & report uploads
+│   │   ├── layout/            # Visual layout shells & global footer
+│   │   ├── nav/               # Top navbar & profile controls
+│   │   ├── tracking/          # Cycle calendar renderers & phase visualizations
+│   ├── context/               # AuthContext managing PBKDF2 key generation
+│   ├── lib/                   # Utility libraries & cryptography wrappers
+│   │   ├── crypto.ts          # Web Crypto AES-GCM and PBKDF2 helper functions
+│   │   ├── cycle.ts           # Cycle calculations & phase predictions
+│   │   ├── data.ts            # IndexedDB read/write routines
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Installation & Local Deployment
 
 ### 1. Prerequisites
 * **Node.js**: `v18.x` or higher
 * **npm** or **yarn**
 
-### 2. Environment Variables
+### 2. Environment Setup
 Create a `.env.local` file in the root directory:
 
 ```env
-# Database Settings (Optional - Omitting transparently falls back to local IndexedDB sandbox)
+# PostgreSQL Connection (Optional - defaults to client-side IndexedDB sandbox if empty)
 DATABASE_URL="postgresql://user:pass@host:port/dbname?sslmode=require"
 
-# NextAuth Token Configuration
-NEXTAUTH_SECRET="your-generated-random-32-byte-hex-string"
+# NextAuth Configuration
+NEXTAUTH_SECRET="your-32-byte-hex-string"
 NEXTAUTH_URL="http://localhost:3000"
 
-# AI Inference Key
+# Groq API Key
 GROQ_API_KEY="gsk_..."
 ```
 
-### 3. Installation
-Install project dependencies:
+### 3. Install Dependencies
 ```bash
 npm install
 ```
 
-### 4. Running Locally (Development Server)
-Launch the Turbopack dev server:
+### 4. Run Development Server
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+Open [http://localhost:3000](http://localhost:3000) to view the application locally.
 
-### 5. Seeding Demo Data
-To explore the dashboard immediately with dummy records:
-1. Log in or sign up.
-2. Go to **Encrypted Backup** inside your profile dropdown, or navigate to Settings.
-3. Click **Generate 90-Day Demo History** to seed logs into your browser's IndexedDB.
+### 5. Seed Test Data
+1. Sign up or log into a test account.
+2. Go to **Settings** or click the profile dropdown menu.
+3. Select **Generate 90-Day Demo History** to populate dummy logs directly into your browser's IndexedDB.
 
 ---
 
-## ⚡ Build & Verification
+## ⚡ Production Verification
 
-To verify typescript safety and build a production-ready package:
+To build and compile the application for deployment:
 
 ```bash
-# Formats and bundles code for deployment
+# Compile and optimize for production
 npm run build
 
-# Runs development web server over production build
+# Start production server
 npm run start
 ```
 
 ---
 
-## ⚖️ Compliance & Compliance Notice
+## ⚖️ Non-Diagnostic Compliance Notice
 
-RedDot.ai is strictly an informational tool. It does not provide medical advice, diagnosis, or treatment. It is not intended to replace professional medical evaluations. All encryption metrics and data storage boundaries are explicitly disclosed in our transparency guidelines.
+RedDot and RedDot.ai are strictly informational resources. They do not provide diagnostic advice, medical treatments, or prescriptive care. Users must never substitute RedDot.ai outputs for professional medical evaluations. All encryption structures and data handling policies are outlined transparently in our security documentation.

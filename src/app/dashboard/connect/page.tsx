@@ -53,9 +53,21 @@ export default function RedConnectPage() {
   const [hasMore, setHasMore] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
+  // Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const fetchPosts = useCallback(async (append = false, targetPage = 1) => {
     try {
-      const res = await fetch(`/api/redconnect/posts?filter=${filter}&tag=${tagFilter}&limit=30&page=${targetPage}`);
+      const res = await fetch(`/api/redconnect/posts?filter=${filter}&tag=${tagFilter}&q=${encodeURIComponent(debouncedQuery)}&limit=30&page=${targetPage}`);
       if (res.ok) {
         const data = await res.json();
         if (append) {
@@ -68,7 +80,7 @@ export default function RedConnectPage() {
     } catch (err) {
       console.error('Failed to fetch posts', err);
     }
-  }, [filter, tagFilter]);
+  }, [filter, tagFilter, debouncedQuery]);
 
   // Initial fetch and filter changes
   useEffect(() => {
@@ -131,6 +143,8 @@ export default function RedConnectPage() {
     setPosts((prev) => prev.filter((p) => p.id !== postId));
   }
 
+  const showLoadingSpinner = isLoading || searchQuery !== debouncedQuery;
+
   return (
     <div className="max-w-2xl mx-auto pt-8 pb-24">
       {/* Header */}
@@ -153,6 +167,33 @@ export default function RedConnectPage() {
           A safe space to share experiences, ask questions, and support each other. 
           Your identity is protected — only your username is visible.
         </p>
+      </motion.div>
+
+      {/* Search Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.05 }}
+        className="relative mb-6"
+      >
+        <div className="relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#e51d38] transition-colors" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search community posts, questions, or users..."
+            className="w-full bg-[rgba(20,20,22,0.6)] backdrop-blur-xl border border-white/5 focus:border-[#e51d38]/50 rounded-xl py-3.5 pl-11 pr-4 text-sm text-white placeholder-gray-500 outline-none transition-all shadow-md"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-white transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </motion.div>
 
       {/* Action Bar */}
@@ -233,10 +274,12 @@ export default function RedConnectPage() {
       </motion.div>
 
       {/* Posts Feed */}
-      {isLoading ? (
+      {showLoadingSpinner ? (
         <div className="flex flex-col items-center justify-center py-20">
           <div className="w-8 h-8 border-2 border-white/10 border-t-[#e51d38] rounded-full animate-spin mb-4" />
-          <p className="text-sm text-gray-500">Loading posts...</p>
+          <p className="text-sm text-gray-500">
+            {searchQuery !== debouncedQuery || searchQuery ? "Searching posts..." : "Loading posts..."}
+          </p>
         </div>
       ) : posts.length === 0 ? (
         <motion.div
@@ -249,12 +292,14 @@ export default function RedConnectPage() {
             <Sparkles className="w-14 h-14 text-gray-600 relative z-10" />
           </div>
           <h3 className="text-lg font-medium text-gray-300 mb-2">
-            {filter === 'saved' ? 'No saved posts yet' : filter === 'my' ? 'You haven\'t posted yet' : 'No posts yet'}
+            {debouncedQuery ? "No matching posts found" : (filter === 'saved' ? 'No saved posts yet' : filter === 'my' ? 'You haven\'t posted yet' : 'No posts yet')}
           </h3>
           <p className="text-sm text-gray-500 max-w-xs mb-6">
-            {filter === 'saved'
-              ? 'Bookmark posts you find helpful and they\'ll appear here.'
-              : 'Be the first to share your thoughts with the community.'}
+            {debouncedQuery 
+              ? "Try searching for different keywords or checking your spelling."
+              : (filter === 'saved'
+                ? 'Bookmark posts you find helpful and they\'ll appear here.'
+                : 'Be the first to share your thoughts with the community.')}
           </p>
           {filter !== 'saved' && (
             <button

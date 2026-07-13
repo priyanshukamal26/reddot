@@ -833,21 +833,7 @@ export default function Home() {
             id="section-3"
             className="relative w-full bg-void-950 text-paper-50 pb-24 z-30"
           >
-            {/* 3A. Overlapping Hero Art: core-orb.png */}
-            <div className="relative w-full pointer-events-none h-0 z-0">
-              {!orbError ? (
-                <img
-                  ref={orbRef}
-                  src={coreOrb}
-                  alt=""
-                  onError={() => setOrbError(true)}
-                  className="absolute left-1/2 w-[160vw] md:w-[1000px] max-w-none pointer-events-none opacity-0 select-none z-0"
-                />
-              ) : (
-                // Overlapping glowing fallback
-                <div className="absolute left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-radial from-signal-500/10 via-transparent to-transparent -translate-y-[80%] pointer-events-none" />
-              )}
-            </div>
+            {/* 3A. Overlapping Hero Art: Removed core-orb.jpeg to prevent content obstruction in Section 2 */}
 
             {/* 3B. Heading Area */}
             <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-16 pt-32 md:pt-48 space-y-12">

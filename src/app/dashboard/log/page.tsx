@@ -57,9 +57,17 @@ const CustomSlider = ({ value, onChange, label }: { value: number | undefined, o
   );
 };
 
+const getTodayString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function DailyLogPage() {
   const router = useRouter();
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [date, setDate] = useState(getTodayString());
   const [entryId, setEntryId] = useState<string>("");
   const [periodFlag, setPeriodFlag] = useState(false);
   const [flowIntensity, setFlowIntensity] = useState<FlowIntensity | undefined>();
@@ -86,7 +94,12 @@ export default function DailyLogPage() {
       const params = new URLSearchParams(window.location.search);
       const dateParam = params.get("date");
       if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
-        setDate(dateParam);
+        const today = getTodayString();
+        if (dateParam <= today) {
+          setDate(dateParam);
+        } else {
+          setDate(today);
+        }
       }
     }
   }, []);
@@ -197,6 +210,11 @@ export default function DailyLogPage() {
   };
 
   const handleSave = async () => {
+    const today = getTodayString();
+    if (date > today) {
+      alert("Logging cycle data for future dates is not permitted.");
+      return;
+    }
     setSaving(true);
     setSaved(false);
 
@@ -276,7 +294,17 @@ export default function DailyLogPage() {
                   <input
                     type="date"
                     value={date}
-                    onChange={(e) => { setDate(e.target.value); setHasUnsavedChanges(true); }}
+                    max={getTodayString()}
+                    onChange={(e) => {
+                      const selectedVal = e.target.value;
+                      const today = getTodayString();
+                      if (selectedVal <= today) {
+                        setDate(selectedVal);
+                        setHasUnsavedChanges(true);
+                      } else {
+                        setDate(today);
+                      }
+                    }}
                     className="bg-transparent text-sm text-gray-300 focus:outline-none focus:text-white w-[110px] [&::-webkit-calendar-picker-indicator]:invert"
                   />
                 </div>

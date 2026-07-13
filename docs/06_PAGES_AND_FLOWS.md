@@ -36,6 +36,7 @@ The post-login app is organized into three pill-nav destinations plus the profil
 | 14 | **Cycle Insights & analytics** | Tracking | Trend charts, phase-correlated patterns (D4), cycle health score (F3, stretch) — analytics now live inside Tracking, not a separate nav item. |
 | 15 | **RedDot.ai (chat)** | RedDot.ai | Conversational AI interface, E1, with persistent past-chat history and resume — see "RedDot.ai" detail below. |
 | 16 | **Report upload & analysis** | RedDot.ai | Upload flow, disclaimer/consent step, results view. Lives inside RedDot.ai since it's the same underlying AI surface, accessed as a distinct mode/tab within that section. |
+| 16a | **RedConnect** | RedConnect | A mini Reddit-like social platform where women can share queries, experiences, suggestions, and general posts under username tags. Global database search, likes, saves, and comments. |
 | 17 | **Know — hub** | Know | Education/info home: phase explainers, articles, general menstrual health knowledge — see "Know" detail below. |
 | 18 | **Know — article/topic detail** | Know | Individual article/explainer reading view. |
 | 19 | **Settings — root** | Profile popup → Settings | Links out to the sub-settings pages below. |
@@ -106,13 +107,19 @@ This is the renamed/expanded home of cycle tracking + analytics (previously spli
 
 ## "RedDot.ai" section — detail
 
-This is the AI layer, branded as its own named product surface (matches the brief's explicit ask for a named chatbot). Internally organized as:
+This is the AI layer, branded as its own named product surface. Internally organized as:
 
-- **Chat** (#15) — the primary conversational interface (feature E1 from 02_FEATURE_SPEC.md, prompts in 08_AI_PROMPTS_AND_LOGIC.md). Context is drawn from the user's local/synced data exactly as specified in those docs — nothing about the underlying data logic changes, only the branding and surrounding UI.
-- **Past chats** — a list/sidebar of previous conversations, each resumable. This is a genuine scope addition vs. v1 (which explicitly did not persist chat history server-side, treating each request as stateless). See the data-model implication note below — this needs to be handled carefully to stay consistent with the project's privacy architecture.
-- **Report analysis** (#16) — the upload/disclaimer/processing/result flow (feature E3), presented as a distinct mode/tab within RedDot.ai rather than a separate top-level page, since it's the same AI surface with a different input type.
+- **Chat** (#15) — the primary conversational interface. Context is drawn from the user's local/synced data. Responses are highly structured (using markdown categories, cards, and bold bullet points) rather than dense walls of prose.
+- **Past chats** — a list/sidebar of previous conversations, each resumable. Includes chat deletion support to clear unwanted history, and automatic short title/heading generation (2-4 words summarizing the conversation) based on the first user query.
+- **Report analysis** (#16) — the upload/disclaimer/processing/result flow, presented as a distinct mode/tab within RedDot.ai.
 
 **Important architectural implication — read before building:** v1's AI logic doc (08_AI_PROMPTS_AND_LOGIC.md) explicitly avoided server-side chat persistence to keep plaintext health data off the server beyond a single request/response cycle. Adding "past chats with resume" means conversation history now needs to persist somewhere. To stay consistent with the project's core privacy promise, **chat history must be stored the same way every other piece of health data is stored: encrypted client-side, in IndexedDB, with the same optional ciphertext-only sync to Neon as everything else** — not as a new, separately-secured server-side store. This is detailed concretely in 04_DATA_MODEL.md and 08_AI_PROMPTS_AND_LOGIC.md's updated sections. Don't let "add chat history" quietly become "add a server-side database of health conversations" — that would directly contradict the architecture in 03_ARCHITECTURE.md.
+
+## "RedConnect" section — detail
+
+This is the social community layer, accessed as a primary destination. It allows users to browse and publish posts, nested comments, and save/bookmark discussions. Key features:
+- **Global Search**: A search bar at the top allows dynamic filtering of posts and usernames in real-time from the backend database across all scopes, showing a custom loading spinner while fetching and friendly empty states.
+- **Tabbed Browsing**: Easily toggle between Global (all posts), Saved (bookmarked posts), and Own (user's posts) feeds.
 
 ## "Know" section — detail
 

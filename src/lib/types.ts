@@ -57,6 +57,7 @@ export type Chat = {
   createdAt: string;
   titleHint: string; // Content-neutral label only (e.g., "Chat from June 14")
   messages: ChatMessage[];
+  title?: string;
 };
 
 // ──────────────────────────────────────────────

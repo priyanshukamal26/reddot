@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
-import { Edit, Clock, Droplets, Heart, Shield, MessageSquare, Send, Mic } from 'lucide-react';
+import { Edit, Clock, Droplets, Heart, Shield, MessageSquare, Send, Mic, Trash2 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import {
   loadAllChats,
@@ -10,10 +10,105 @@ import {
   createNewChat,
   loadAllEntries,
   loadAllCycles,
+  deleteChat,
 } from "@/lib/data";
 import { calculateCycleStats, getCurrentPhase } from "@/lib/cycle";
 import { summarizeRecentData } from "@/lib/summary";
 import type { Chat, ChatMessage } from "@/lib/types";
+
+function fallbackTitle(question: string): string {
+  let title = question.trim();
+  title = title.replace(/^(why|how|what|can|is|are|do|does|am|should)\s+(am|i|you|we|the|a|an|my|your|to|do|have|feel|get)\s+/i, '');
+  title = title.charAt(0).toUpperCase() + title.slice(1);
+  title = title.replace(/[?.!,;]/g, '');
+  const words = title.split(/\s+/);
+  if (words.length > 4) {
+    return words.slice(0, 4).join(" ") + "...";
+  }
+  return title;
+}
+
+const StructuredMessage = ({ content = "" }: { content?: string }) => {
+  const lines = content.split('\n');
+  const elements: React.ReactNode[] = [];
+  
+  let currentList: string[] = [];
+  let listKey = 0;
+
+  const renderTextWithBold = (text: string) => {
+    const parts = text.split(/\*\*(.*?)\*\*/g);
+    return parts.map((part, idx) => 
+      idx % 2 === 1 ? <strong key={idx} className="text-white font-semibold">{part}</strong> : part
+    );
+  };
+
+  const flushList = (key: number) => {
+    if (currentList.length === 0) return null;
+    const listItems = currentList.map((item, idx) => (
+      <li key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-gray-300 leading-relaxed">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#e51d38] mt-1.5 shrink-0 shadow-[0_0_8px_rgba(229,29,56,0.8)]" />
+        <span>{renderTextWithBold(item)}</span>
+      </li>
+    ));
+    currentList = [];
+    listKey++;
+    return (
+      <div key={`list-container-${key}-${listKey}`} className="my-3 bg-white/[0.02] border border-white/5 rounded-xl p-4 space-y-3 shadow-inner">
+        <ul className="space-y-3">{listItems}</ul>
+      </div>
+    );
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) {
+      if (currentList.length > 0) {
+        elements.push(flushList(i));
+      }
+      continue;
+    }
+
+    if (line.startsWith('###')) {
+      if (currentList.length > 0) {
+        elements.push(flushList(i));
+      }
+      const headerText = line.replace(/^###\s*/, '');
+      elements.push(
+        <h3 key={`h3-${i}`} className="text-xs font-mono tracking-widest text-[#e51d38] uppercase font-bold mt-5 mb-2 first:mt-1">
+          {headerText}
+        </h3>
+      );
+    } else if (line.startsWith('##')) {
+      if (currentList.length > 0) {
+        elements.push(flushList(i));
+      }
+      const headerText = line.replace(/^##\s*/, '');
+      elements.push(
+        <h2 key={`h2-${i}`} className="text-sm font-mono tracking-widest text-white uppercase font-bold mt-6 mb-3 first:mt-1">
+          {headerText}
+        </h2>
+      );
+    } else if (line.startsWith('-') || line.startsWith('*')) {
+      const itemText = line.replace(/^[-*]\s*/, '');
+      currentList.push(itemText);
+    } else {
+      if (currentList.length > 0) {
+        elements.push(flushList(i));
+      }
+      elements.push(
+        <p key={`p-${i}`} className="text-xs sm:text-sm text-gray-300 leading-relaxed mb-3 last:mb-0">
+          {renderTextWithBold(line)}
+        </p>
+      );
+    }
+  }
+
+  if (currentList.length > 0) {
+    elements.push(flushList(lines.length));
+  }
+
+  return <div className="space-y-1.5">{elements}</div>;
+};
 
 export default function ChatPage() {
   const [inputText, setInputText] = useState('');
@@ -83,6 +178,29 @@ export default function ChatPage() {
     }
   }, []);
 
+  const handleDeleteChat = useCallback(async (chatId: string) => {
+    try {
+      await deleteChat(chatId);
+      
+      const updatedChats = pastChats.filter((c) => c.chatId !== chatId);
+      setPastChats(updatedChats);
+      
+      if (currentChat?.chatId === chatId) {
+        if (updatedChats.length > 0) {
+          const nextChat = await loadChat(updatedChats[0].chatId);
+          setCurrentChat(nextChat);
+        } else {
+          const newThread = createNewChat();
+          await saveChat(newThread);
+          setCurrentChat(newThread);
+          setPastChats([newThread]);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to delete chat:", err);
+    }
+  }, [currentChat, pastChats]);
+
   const handleSendMessage = useCallback(
     async (messageText: string) => {
       let activeChat = currentChat;
@@ -129,6 +247,8 @@ export default function ChatPage() {
           confidence = currentPhaseInfo.confidence;
         }
 
+        const isFirstMessage = updatedChat.messages.filter(m => m.role === 'user').length === 1;
+
         const response = await fetch("/api/ai/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -138,6 +258,7 @@ export default function ChatPage() {
             phase,
             dayWithinPhase,
             confidence,
+            generate_title: isFirstMessage,
           }),
         });
 
@@ -156,9 +277,13 @@ export default function ChatPage() {
           timestamp: new Date().toISOString(),
         };
 
+        const newTitle = resData.title || (isFirstMessage ? fallbackTitle(messageText) : undefined);
+
         const finalChat: Chat = {
           ...updatedChat,
           messages: [...updatedChat.messages, assistantMsg],
+          title: newTitle || updatedChat.title || updatedChat.titleHint,
+          titleHint: newTitle || updatedChat.titleHint,
         };
 
         setCurrentChat(finalChat);
@@ -211,27 +336,41 @@ export default function ChatPage() {
           {pastChats.map((chat) => {
             const active = currentChat?.chatId === chat.chatId;
             return (
-              <button
+              <div
                 key={chat.chatId}
-                onClick={() => handleSelectChat(chat.chatId)}
-                className={`w-full flex items-start gap-3 p-3 rounded-xl transition-all text-left ${
+                className={`w-full flex items-center justify-between p-2.5 rounded-xl transition-all group ${
                   active 
                     ? 'bg-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]' 
                     : 'hover:bg-white/5 text-gray-400'
                 }`}
               >
-                <div className={`p-2 rounded-full ${active ? 'bg-white/10' : 'bg-transparent'}`}>
-                  <MessageSquare className={`w-4 h-4 ${active ? 'text-white' : 'text-gray-500'}`} />
-                </div>
-                <div className="flex-1 overflow-hidden">
-                  <h3 className={`text-sm font-medium truncate ${active ? 'text-white' : 'text-gray-400'}`}>
-                    {chat.title || "New Chat"}
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-0.5 truncate">
-                    {new Date(chat.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-              </button>
+                <button
+                  onClick={() => handleSelectChat(chat.chatId)}
+                  className="flex-1 flex items-start gap-3 overflow-hidden text-left"
+                >
+                  <div className={`p-2 rounded-full ${active ? 'bg-white/10' : 'bg-transparent'} shrink-0`}>
+                    <MessageSquare className={`w-4 h-4 ${active ? 'text-white' : 'text-gray-500'}`} />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <h3 className={`text-sm font-medium truncate ${active ? 'text-white' : 'text-gray-400'}`}>
+                      {chat.title || chat.titleHint || "New Chat"}
+                    </h3>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate font-mono">
+                      {new Date(chat.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteChat(chat.chatId);
+                  }}
+                  className="p-2 text-gray-500 hover:text-red-500 hover:bg-white/5 rounded-lg transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 shrink-0"
+                  title="Delete Chat"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
             );
           })}
         </div>
@@ -264,7 +403,11 @@ export default function ChatPage() {
                     : 'bg-[#e51d38]/10 border border-[#e51d38]/20 text-gray-200 rounded-tl-sm shadow-[0_4px_20px_rgba(229,29,56,0.05)]'
                 }`}
               >
-                {msg.content}
+                {msg.role === 'assistant' ? (
+                  <StructuredMessage content={msg.content} />
+                ) : (
+                  msg.content
+                )}
               </div>
             </motion.div>
           ))}

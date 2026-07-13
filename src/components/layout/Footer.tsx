@@ -115,7 +115,7 @@ export default function Footer() {
           </p>
           <div className="flex gap-3 text-xs font-mono">
             <a
-              href="https://linkedin.com"
+              href="https://www.linkedin.com/in/shambhavi-nayak/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#5e5e60] hover:text-[#e51d38] transition-colors"
@@ -123,7 +123,7 @@ export default function Footer() {
               [<span className="px-0.5">in</span>]
             </a>
             <a
-              href="https://github.com"
+              href="https://github.com/Sham28-learner/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#5e5e60] hover:text-[#e51d38] transition-colors"
@@ -156,7 +156,7 @@ export default function Footer() {
           </p>
           <div className="flex gap-3 text-xs font-mono">
             <a
-              href="https://linkedin.com"
+              href="https://www.linkedin.com/in/priyanshukamal/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#5e5e60] hover:text-[#e51d38] transition-colors"
@@ -164,7 +164,7 @@ export default function Footer() {
               [<span className="px-0.5">in</span>]
             </a>
             <a
-              href="https://github.com"
+              href="https://github.com/priyanshukamal26/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-[#5e5e60] hover:text-[#e51d38] transition-colors"

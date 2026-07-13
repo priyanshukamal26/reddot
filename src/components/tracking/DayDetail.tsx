@@ -120,6 +120,15 @@ export default function DayDetail({ isOpen, onClose, date }: DayDetailProps) {
               const isRight = index === 2;
               const entry = entriesCache[d];
               
+              const localToday = (() => {
+                const now = new Date();
+                const y = now.getFullYear();
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+              })();
+              const isFuture = d > localToday;
+              
               return (
                 <motion.div
                   key={d}
@@ -156,9 +165,11 @@ export default function DayDetail({ isOpen, onClose, date }: DayDetailProps) {
                     </div>
                     {isCenter && (
                       <div className="flex gap-2">
-                        <button onClick={() => router.push(`/dashboard/log?date=${d}`)} className="px-3 py-1 -mt-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] text-gray-300 hover:text-white transition-colors z-50 font-mono uppercase tracking-widest flex items-center justify-center">
-                          Edit
-                        </button>
+                        {!isFuture && (
+                          <button onClick={() => router.push(`/dashboard/log?date=${d}`)} className="px-3 py-1 -mt-1 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] text-gray-300 hover:text-white transition-colors z-50 font-mono uppercase tracking-widest flex items-center justify-center">
+                            Edit
+                          </button>
+                        )}
                         <button onClick={onClose} className="p-1 -mt-1 -mr-1 text-gray-500 hover:text-white transition-colors z-50">
                           <X className="w-5 h-5" />
                         </button>
@@ -168,8 +179,10 @@ export default function DayDetail({ isOpen, onClose, date }: DayDetailProps) {
 
                   {!entry ? (
                     <div className="flex flex-col items-center justify-center h-full flex-grow pb-10">
-                      <p className="text-gray-500 text-sm mb-6">No data logged.</p>
-                      {isCenter && (
+                      <p className="text-gray-500 text-sm mb-6">
+                        {isFuture ? "Cannot log data for future dates." : "No data logged."}
+                      </p>
+                      {isCenter && !isFuture && (
                         <button onClick={() => router.push(`/dashboard/log?date=${d}`)} className="px-8 py-3 bg-[rgba(30,30,32,0.8)] border border-white/10 hover:border-[#e51d38]/50 text-white font-medium hover:bg-[#e51d38]/10 text-xs rounded-xl transition-all uppercase tracking-widest">
                           Log this Day
                         </button>
@@ -240,7 +253,7 @@ export default function DayDetail({ isOpen, onClose, date }: DayDetailProps) {
                     </div>
                   )}
 
-                  {entry && isCenter && (
+                  {entry && isCenter && !isFuture && (
                     <button onClick={() => router.push(`/dashboard/log?date=${d}`)} className="w-full mt-6 py-3.5 bg-[rgba(20,20,22,0.8)] border border-white/10 hover:border-[#e51d38]/50 text-white font-medium hover:bg-[#e51d38]/10 text-xs rounded-xl transition-all uppercase tracking-widest shrink-0">
                       Edit Log Entry
                     </button>

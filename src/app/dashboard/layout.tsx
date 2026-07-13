@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         
         <DashboardNavbar />
         
-        <main className="flex-grow pt-24 px-6 pb-6 relative z-10">
+        <main className="flex-grow pt-24 px-6 pb-6 relative">
           {children}
         </main>
 

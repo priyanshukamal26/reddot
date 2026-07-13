@@ -186,6 +186,7 @@ Each feature is tagged **[MVP]**, **[V1.1]** (build right after MVP if time allo
 - Clean tagging structure: `query` | `experience` | `suggestion` | `general`.
 - Infinite scrolling/pagination support (default limit of 30 posts per page with a "Load More" action button).
 - Nested, Reddit-style comments (replies) on posts to foster active community discussions.
+- **Global Search Bar**: Dynamic database search that filters posts and usernames across all scopes, showing a loading spinner while querying and custom empty-state messages.
 
 ### I2. Likes & Saves
 - Ability to like posts to increase their community relevance score.

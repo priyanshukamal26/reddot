@@ -276,13 +276,13 @@ export async function recalculateCycles(): Promise<void> {
 
 export async function saveChat(chat: Chat): Promise<void> {
   const key = getKey();
-  const { chatId, createdAt, titleHint, messages } = chat;
+  const { chatId, createdAt, titleHint, messages, title } = chat;
   const encrypted = await encryptJSON(key, { messages });
 
   const record: EncryptedChat = {
     chat_id: chatId,
     created_at: createdAt,
-    title_hint: titleHint,
+    title_hint: title || titleHint,
     encrypted_payload: encrypted.ciphertext,
     iv: encrypted.iv,
     updated_at: new Date().toISOString(),
@@ -306,6 +306,7 @@ export async function loadChat(chatId: string): Promise<Chat | null> {
     chatId: record.chat_id,
     createdAt: record.created_at,
     titleHint: record.title_hint,
+    title: record.title_hint,
     messages: payload.messages,
   };
 }
@@ -324,6 +325,7 @@ export async function loadAllChats(): Promise<Chat[]> {
           chatId: r.chat_id,
           createdAt: r.created_at,
           titleHint: r.title_hint,
+          title: r.title_hint,
           messages: payload.messages,
         };
       } catch (err) {
@@ -348,6 +350,11 @@ export function createNewChat(): Chat {
     titleHint: `Chat from ${now.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`,
     messages: [],
   };
+}
+
+export async function deleteChat(chatId: string): Promise<void> {
+  await db.deleteChat(chatId);
+  await syncIfEnabled();
 }
 
 // ──────────────────────────────────────────────

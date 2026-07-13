@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
-import { saveCycle, saveMeta, loadMeta } from "@/lib/data";
+import { saveCycle, saveMeta, loadMeta, saveEntry } from "@/lib/data";
 import { generateId } from "@/lib/utils";
 import type { Cycle } from "@/lib/types";
 import AuthGuard from "@/components/auth/AuthGuard";
@@ -53,6 +53,14 @@ export default function OnboardingPage() {
         notes: cycleData.isIrregular ? "Irregular cycle reported during onboarding" : undefined,
       };
       await saveCycle(firstCycle);
+
+      // Create a matching daily entry for the last period start date to prevent it from being deleted by recalculateCycles
+      await saveEntry({
+        entryId: generateId(),
+        date: cycleData.lastPeriodStart,
+        periodFlag: true,
+        symptoms: [],
+      });
 
       // 2. Update app meta with onboarding complete + sync choice
       const existingMeta = await loadMeta();

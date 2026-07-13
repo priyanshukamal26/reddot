@@ -23,6 +23,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const filter = url.searchParams.get("filter") || "all";
     const tag = url.searchParams.get("tag") || "";
+    const q = url.searchParams.get("q") || "";
     
     const limitParam = parseInt(url.searchParams.get("limit") || "30", 10);
     const pageParam = parseInt(url.searchParams.get("page") || "1", 10);
@@ -34,55 +35,112 @@ export async function GET(request: Request) {
 
     const sql = getSql();
     let posts = [] as any[];
+    const searchPattern = q ? `%${q}%` : "";
 
     if (filter === "saved") {
       if (tag) {
-        posts = await sql`
-          SELECT p.* FROM rc_posts p
-          JOIN rc_saves s ON p.id = s.post_id
-          WHERE s.user_id = ${session.user.id} AND p.tag = ${tag}
-          ORDER BY p.created_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
+        if (q) {
+          posts = await sql`
+            SELECT p.* FROM rc_posts p
+            JOIN rc_saves s ON p.id = s.post_id
+            WHERE s.user_id = ${session.user.id} AND p.tag = ${tag} AND (p.content ILIKE ${searchPattern} OR p.username ILIKE ${searchPattern})
+            ORDER BY p.created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        } else {
+          posts = await sql`
+            SELECT p.* FROM rc_posts p
+            JOIN rc_saves s ON p.id = s.post_id
+            WHERE s.user_id = ${session.user.id} AND p.tag = ${tag}
+            ORDER BY p.created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        }
       } else {
-        posts = await sql`
-          SELECT p.* FROM rc_posts p
-          JOIN rc_saves s ON p.id = s.post_id
-          WHERE s.user_id = ${session.user.id}
-          ORDER BY p.created_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
+        if (q) {
+          posts = await sql`
+            SELECT p.* FROM rc_posts p
+            JOIN rc_saves s ON p.id = s.post_id
+            WHERE s.user_id = ${session.user.id} AND (p.content ILIKE ${searchPattern} OR p.username ILIKE ${searchPattern})
+            ORDER BY p.created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        } else {
+          posts = await sql`
+            SELECT p.* FROM rc_posts p
+            JOIN rc_saves s ON p.id = s.post_id
+            WHERE s.user_id = ${session.user.id}
+            ORDER BY p.created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        }
       }
     } else if (filter === "my") {
       if (tag) {
-        posts = await sql`
-          SELECT * FROM rc_posts
-          WHERE user_id = ${session.user.id} AND tag = ${tag}
-          ORDER BY created_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
+        if (q) {
+          posts = await sql`
+            SELECT * FROM rc_posts
+            WHERE user_id = ${session.user.id} AND tag = ${tag} AND (content ILIKE ${searchPattern} OR username ILIKE ${searchPattern})
+            ORDER BY created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        } else {
+          posts = await sql`
+            SELECT * FROM rc_posts
+            WHERE user_id = ${session.user.id} AND tag = ${tag}
+            ORDER BY created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        }
       } else {
-        posts = await sql`
-          SELECT * FROM rc_posts
-          WHERE user_id = ${session.user.id}
-          ORDER BY created_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
+        if (q) {
+          posts = await sql`
+            SELECT * FROM rc_posts
+            WHERE user_id = ${session.user.id} AND (content ILIKE ${searchPattern} OR username ILIKE ${searchPattern})
+            ORDER BY created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        } else {
+          posts = await sql`
+            SELECT * FROM rc_posts
+            WHERE user_id = ${session.user.id}
+            ORDER BY created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        }
       }
     } else {
       if (tag) {
-        posts = await sql`
-          SELECT * FROM rc_posts
-          WHERE tag = ${tag}
-          ORDER BY created_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
+        if (q) {
+          posts = await sql`
+            SELECT * FROM rc_posts
+            WHERE tag = ${tag} AND (content ILIKE ${searchPattern} OR username ILIKE ${searchPattern})
+            ORDER BY created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        } else {
+          posts = await sql`
+            SELECT * FROM rc_posts
+            WHERE tag = ${tag}
+            ORDER BY created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        }
       } else {
-        posts = await sql`
-          SELECT * FROM rc_posts
-          ORDER BY created_at DESC
-          LIMIT ${limit} OFFSET ${offset}
-        `;
+        if (q) {
+          posts = await sql`
+            SELECT * FROM rc_posts
+            WHERE content ILIKE ${searchPattern} OR username ILIKE ${searchPattern}
+            ORDER BY created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        } else {
+          posts = await sql`
+            SELECT * FROM rc_posts
+            ORDER BY created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
+          `;
+        }
       }
     }
 

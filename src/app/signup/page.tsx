@@ -7,10 +7,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 
-export default function LoginPage() {
-  const [activeTab, setActiveTab] = useState<'login' | 'signup'>('signup');
+export default function SignupPage() {
   const router = useRouter();
-  const { signup, login, isAuthenticated, onboardingDone } = useAuth();
+  const { signup, isAuthenticated, onboardingDone } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -28,10 +27,6 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeTab === 'login') {
-      router.push('/login');
-      return;
-    }
 
     if (password.length < 8) {
       setError("Password must be at least 8 characters.");
@@ -99,28 +94,19 @@ export default function LoginPage() {
           </div>
 
           <div className="flex gap-6 mb-8 border-b border-white/10 pb-2">
-            <button
-              onClick={() => setActiveTab('signup')}
-              className={`text-sm font-medium tracking-wide transition-colors ${
-                activeTab === 'signup' ? 'text-white' : 'text-gray-500 hover:text-gray-300'
-              }`}
-            >
+            <span className="text-sm font-medium tracking-wide text-white relative pb-2 select-none">
               SIGN UP
-            </button>
-            <button
-              onClick={() => setActiveTab('login')}
-              className={`text-sm font-medium tracking-wide transition-colors relative ${
-                activeTab === 'login' ? 'text-white' : 'text-gray-500 hover:text-gray-300'
-              }`}
+              <motion.div
+                layoutId="tab-indicator"
+                className="absolute -bottom-2.5 left-0 right-0 h-0.5 bg-white"
+              />
+            </span>
+            <Link
+              href="/login"
+              className="text-sm font-medium tracking-wide text-gray-500 hover:text-gray-300 pb-2 transition-colors"
             >
               LOG IN
-              {activeTab === 'login' && (
-                <motion.div
-                  layoutId="tab-indicator"
-                  className="absolute -bottom-2.5 left-0 right-0 h-0.5 bg-white"
-                />
-              )}
-            </button>
+            </Link>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -163,18 +149,15 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full bg-[#e51d38] hover:bg-[#c0142b] text-white rounded-xl py-4 font-medium tracking-wide transition-colors disabled:opacity-50"
             >
-              {loading ? (activeTab === 'login' ? 'SIGNING IN...' : 'CREATING ACCOUNT...') : (activeTab === 'login' ? 'SIGN IN' : 'CREATE ACCOUNT')}
+              {loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'}
             </button>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-8">
-            {activeTab === 'login' ? "Don't have an account? " : "Already have an account? "}
-            <button
-              onClick={() => setActiveTab(activeTab === 'login' ? 'signup' : 'login')}
-              className="text-white hover:underline"
-            >
-              {activeTab === 'login' ? 'Sign Up' : 'Log In'}
-            </button>
+            Already have an account?{" "}
+            <Link href="/login" className="text-white hover:underline font-medium">
+              Log In
+            </Link>
           </p>
         </motion.div>
       </div>

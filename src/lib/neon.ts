@@ -14,6 +14,10 @@ function readMockDb() {
       user_meta: [] as any[],
       encrypted_blobs: [] as any[],
       report_analysis_events: [] as any[],
+      rc_posts: [] as any[],
+      rc_likes: [] as any[],
+      rc_saves: [] as any[],
+      rc_comments: [] as any[],
     };
     fs.writeFileSync(MOCK_DB_PATH, JSON.stringify(defaultDb, null, 2));
     return defaultDb;
@@ -26,6 +30,10 @@ function readMockDb() {
       user_meta: [],
       encrypted_blobs: [],
       report_analysis_events: [],
+      rc_posts: [],
+      rc_likes: [],
+      rc_saves: [],
+      rc_comments: [],
     };
   }
 }
@@ -264,6 +272,242 @@ async function mockSql(strings: TemplateStringsArray | string[], ...values: any[
     };
     db.report_analysis_events.push(newEvent);
     writeMockDb(db);
+    return [];
+  }
+
+  // ── RedConnect: SELECT posts (all, ordered by created_at DESC) ──
+  if (queryText.includes("SELECT * FROM rc_posts") && queryText.includes("ORDER BY created_at DESC") && !queryText.includes("WHERE")) {
+    if (!db.rc_posts) db.rc_posts = [];
+    const limit = typeof values[values.length - 2] === 'number' ? values[values.length - 2] : 30;
+    const offset = typeof values[values.length - 1] === 'number' ? values[values.length - 1] : 0;
+    const sorted = [...db.rc_posts].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return sorted.slice(offset, offset + limit);
+  }
+  
+  // ── RedConnect: SELECT posts by tag ──
+  if (queryText.includes("SELECT * FROM rc_posts WHERE tag = ?") && queryText.includes("ORDER BY created_at DESC")) {
+    if (!db.rc_posts) db.rc_posts = [];
+    const tag = values[0];
+    const limit = typeof values[values.length - 2] === 'number' ? values[values.length - 2] : 30;
+    const offset = typeof values[values.length - 1] === 'number' ? values[values.length - 1] : 0;
+    const filtered = db.rc_posts.filter((p: any) => p.tag === tag).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return filtered.slice(offset, offset + limit);
+  }
+
+  // ── RedConnect: SELECT posts by user_id ──
+  if (queryText.includes("SELECT * FROM rc_posts") && queryText.includes("WHERE user_id = ?") && queryText.includes("ORDER BY created_at DESC")) {
+    if (!db.rc_posts) db.rc_posts = [];
+    const userId = values[0];
+    let filtered = db.rc_posts.filter((p: any) => p.user_id === userId);
+    
+    // Check for tag
+    if (queryText.includes("AND tag = ?")) {
+      const tag = values[1];
+      filtered = filtered.filter((p: any) => p.tag === tag);
+    }
+    
+    const limit = typeof values[values.length - 2] === 'number' ? values[values.length - 2] : 30;
+    const offset = typeof values[values.length - 1] === 'number' ? values[values.length - 1] : 0;
+    
+    filtered.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return filtered.slice(offset, offset + limit);
+  }
+
+  // ── RedConnect: SELECT single post by id ──
+  if (queryText.includes("SELECT * FROM rc_posts WHERE id = ?") && !queryText.includes("user_id")) {
+    if (!db.rc_posts) db.rc_posts = [];
+    const postId = values[0];
+    const post = db.rc_posts.find((p: any) => p.id === postId);
+    return post ? [post] : [];
+  }
+
+  // ── RedConnect: INSERT post ──
+  if (queryText.includes("INSERT INTO rc_posts")) {
+    if (!db.rc_posts) db.rc_posts = [];
+    const newPost = {
+      id: values[0],
+      user_id: values[1],
+      username: values[2],
+      content: values[3],
+      image_url: values[4] || null,
+      tag: values[5] || "general",
+      created_at: values[6],
+      updated_at: values[7] || values[6],
+      like_count: 0,
+      save_count: 0,
+      comment_count: 0,
+    };
+    db.rc_posts.push(newPost);
+    writeMockDb(db);
+    return [newPost];
+  }
+
+  // ── RedConnect: DELETE post (own only) ──
+  if (queryText.includes("DELETE FROM rc_posts WHERE id = ?") && queryText.includes("user_id = ?")) {
+    if (!db.rc_posts) db.rc_posts = [];
+    if (!db.rc_likes) db.rc_likes = [];
+    if (!db.rc_saves) db.rc_saves = [];
+    const postId = values[0];
+    const userId = values[1];
+    const idx = db.rc_posts.findIndex((p: any) => p.id === postId && p.user_id === userId);
+    if (idx >= 0) {
+      db.rc_posts.splice(idx, 1);
+      db.rc_likes = db.rc_likes.filter((l: any) => l.post_id !== postId);
+      db.rc_saves = db.rc_saves.filter((s: any) => s.post_id !== postId);
+      if (db.rc_comments) {
+        db.rc_comments = db.rc_comments.filter((c: any) => c.post_id !== postId);
+      }
+      writeMockDb(db);
+      return [{ id: postId }];
+    }
+    return [];
+  }
+
+  // ── RedConnect: SELECT liked post_ids for user ──
+  if (queryText.includes("SELECT post_id FROM rc_likes WHERE user_id = ?")) {
+    if (!db.rc_likes) db.rc_likes = [];
+    const userId = values[0];
+    return db.rc_likes.filter((l: any) => l.user_id === userId).map((l: any) => ({ post_id: l.post_id }));
+  }
+
+  // ── RedConnect: SELECT saved post_ids for user ──
+  if (queryText.includes("SELECT post_id FROM rc_saves WHERE user_id = ?")) {
+    if (!db.rc_saves) db.rc_saves = [];
+    const userId = values[0];
+    return db.rc_saves.filter((s: any) => s.user_id === userId).map((s: any) => ({ post_id: s.post_id }));
+  }
+
+  // ── RedConnect: TOGGLE like ──
+  if (queryText.includes("SELECT * FROM rc_likes WHERE user_id = ?") && queryText.includes("post_id = ?")) {
+    if (!db.rc_likes) db.rc_likes = [];
+    if (!db.rc_posts) db.rc_posts = [];
+    const userId = values[0];
+    const postId = values[1];
+    const existingIdx = db.rc_likes.findIndex((l: any) => l.user_id === userId && l.post_id === postId);
+    const postIdx = db.rc_posts.findIndex((p: any) => p.id === postId);
+    
+    if (existingIdx >= 0) {
+      // Unlike
+      db.rc_likes.splice(existingIdx, 1);
+      if (postIdx >= 0 && db.rc_posts[postIdx].like_count > 0) {
+        db.rc_posts[postIdx].like_count--;
+      }
+      writeMockDb(db);
+      return [{ action: "unliked", like_count: postIdx >= 0 ? db.rc_posts[postIdx].like_count : 0 }];
+    } else {
+      // Like
+      db.rc_likes.push({ user_id: userId, post_id: postId, created_at: new Date().toISOString() });
+      if (postIdx >= 0) {
+        db.rc_posts[postIdx].like_count = (db.rc_posts[postIdx].like_count || 0) + 1;
+      }
+      writeMockDb(db);
+      return [{ action: "liked", like_count: postIdx >= 0 ? db.rc_posts[postIdx].like_count : 1 }];
+    }
+  }
+
+  // ── RedConnect: TOGGLE save ──
+  if (queryText.includes("SELECT * FROM rc_saves WHERE user_id = ?") && queryText.includes("post_id = ?")) {
+    if (!db.rc_saves) db.rc_saves = [];
+    if (!db.rc_posts) db.rc_posts = [];
+    const userId = values[0];
+    const postId = values[1];
+    const existingIdx = db.rc_saves.findIndex((s: any) => s.user_id === userId && s.post_id === postId);
+    const postIdx = db.rc_posts.findIndex((p: any) => p.id === postId);
+    
+    if (existingIdx >= 0) {
+      // Unsave
+      db.rc_saves.splice(existingIdx, 1);
+      if (postIdx >= 0 && db.rc_posts[postIdx].save_count > 0) {
+        db.rc_posts[postIdx].save_count--;
+      }
+      writeMockDb(db);
+      return [{ action: "unsaved", save_count: postIdx >= 0 ? db.rc_posts[postIdx].save_count : 0 }];
+    } else {
+      // Save
+      db.rc_saves.push({ user_id: userId, post_id: postId, created_at: new Date().toISOString() });
+      if (postIdx >= 0) {
+        db.rc_posts[postIdx].save_count = (db.rc_posts[postIdx].save_count || 0) + 1;
+      }
+      writeMockDb(db);
+      return [{ action: "saved", save_count: postIdx >= 0 ? db.rc_posts[postIdx].save_count : 1 }];
+    }
+  }
+
+  // ── RedConnect: SELECT saved posts for user (full posts) ──
+  if (queryText.includes("SELECT p.* FROM rc_posts p JOIN rc_saves")) {
+    if (!db.rc_posts) db.rc_posts = [];
+    if (!db.rc_saves) db.rc_saves = [];
+    const userId = values[0];
+    const savedPostIds = db.rc_saves.filter((s: any) => s.user_id === userId).map((s: any) => s.post_id);
+    let savedPosts = db.rc_posts.filter((p: any) => savedPostIds.includes(p.id));
+    
+    if (queryText.includes("AND p.tag = ?")) {
+      const tag = values[1];
+      savedPosts = savedPosts.filter((p: any) => p.tag === tag);
+    }
+    
+    const limit = typeof values[values.length - 2] === 'number' ? values[values.length - 2] : 30;
+    const offset = typeof values[values.length - 1] === 'number' ? values[values.length - 1] : 0;
+    
+    savedPosts.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return savedPosts.slice(offset, offset + limit);
+  }
+
+  // ── RedConnect Comments: SELECT comments for post ──
+  if (queryText.includes("SELECT * FROM rc_comments WHERE post_id = ?") && queryText.includes("ORDER BY created_at ASC")) {
+    if (!db.rc_comments) db.rc_comments = [];
+    const postId = values[0];
+    return db.rc_comments.filter((c: any) => c.post_id === postId).sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  }
+
+  // ── RedConnect Comments: INSERT comment ──
+  if (queryText.includes("INSERT INTO rc_comments")) {
+    if (!db.rc_comments) db.rc_comments = [];
+    const newComment = {
+      id: values[0],
+      post_id: values[1],
+      user_id: values[2],
+      username: values[3],
+      content: values[4],
+      created_at: values[5],
+      updated_at: values[6] || values[5],
+    };
+    db.rc_comments.push(newComment);
+    
+    // Optimistic mock update for comment_count (though the real route does a separate UPDATE)
+    if (db.rc_posts) {
+      const postIdx = db.rc_posts.findIndex((p: any) => p.id === newComment.post_id);
+      if (postIdx >= 0) {
+        db.rc_posts[postIdx].comment_count = (db.rc_posts[postIdx].comment_count || 0) + 1;
+      }
+    }
+    
+    writeMockDb(db);
+    return [newComment];
+  }
+
+  // ── RedConnect Comments: DELETE comment (own only) ──
+  if (queryText.includes("DELETE FROM rc_comments WHERE id = ?") && queryText.includes("user_id = ?")) {
+    if (!db.rc_comments) db.rc_comments = [];
+    const commentId = values[0];
+    const userId = values[1];
+    const idx = db.rc_comments.findIndex((c: any) => c.id === commentId && c.user_id === userId);
+    
+    if (idx >= 0) {
+      const comment = db.rc_comments[idx];
+      db.rc_comments.splice(idx, 1);
+      
+      // Optimistic mock update for comment_count
+      if (db.rc_posts) {
+        const postIdx = db.rc_posts.findIndex((p: any) => p.id === comment.post_id);
+        if (postIdx >= 0) {
+          db.rc_posts[postIdx].comment_count = Math.max(0, (db.rc_posts[postIdx].comment_count || 0) - 1);
+        }
+      }
+      
+      writeMockDb(db);
+      return [{ id: commentId }];
+    }
     return [];
   }
 

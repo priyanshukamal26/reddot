@@ -28,6 +28,7 @@ import {
 import DecryptReveal from "@/components/layout/DecryptReveal";
 import PhaseRing from "@/components/tracking/PhaseRing";
 import { useAuth } from '@/context/auth-context';
+import Footer from '@/components/layout/Footer';
 
 // Assets referenced via static public URLs (copied from src/assets to public/assets on prebuild)
 const heroSignalBloom = "/assets/video/hero-signal-bloom.mp4";
@@ -1113,14 +1114,9 @@ export default function Home() {
                 </Link>
               </div>
             </div>
-
-            {/* Footer Copy */}
-            <div className="pt-20 font-mono text-ink-500/50 space-y-2 select-none max-w-md mx-auto">
-              <p>RedDot is an open-source demonstration for HackHazards &apos;26.</p>
-              <p>© 2026 RedDot Team. Encryptable only with your secret password.</p>
-            </div>
           </section>
 
+          <Footer />
         </div>
       </div>
     </div>

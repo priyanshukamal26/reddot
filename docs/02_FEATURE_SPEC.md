@@ -178,6 +178,31 @@ Each feature is tagged **[MVP]**, **[V1.1]** (build right after MVP if time allo
 
 ---
 
+## I. RedConnect (Social Media Hub) — added in v3 **[MVP]**
+
+### I1. Public Posting & Discussions
+- A mini Reddit-like social platform where women can share queries, experiences, suggestions, and general posts under username tags.
+- Support for optional image uploads (as base64 or static URLs).
+- Clean tagging structure: `query` | `experience` | `suggestion` | `general`.
+- Infinite scrolling/pagination support (default limit of 30 posts per page with a "Load More" action button).
+- Nested, Reddit-style comments (replies) on posts to foster active community discussions.
+
+### I2. Likes & Saves
+- Ability to like posts to increase their community relevance score.
+- Ability to save/bookmark posts, which syncs to the user's account and renders in a filtered "Saved" tab for easy reference.
+
+---
+
+## J. Global UI Elements — added in v3 **[MVP]**
+
+### J1. Unified Premium Footer
+- Present on landing pages and all internal pages (including dashboard tabs and settings).
+- Prominent **Data Sovereignty** branding at the top.
+- Three-column layout displaying Creator profiles (LinkedIn & GitHub links) and REDDOT core product values.
+- Bottom status bar containing licensing/demo notices, version metadata (`v1.0.4-beta`), and an animated, real-time encrypted stream active indicator (`● encrypted_stream_active`).
+
+---
+
 ## Feature summary table
 
 | Code | Feature | Tier |
@@ -214,3 +239,7 @@ Each feature is tagged **[MVP]**, **[V1.1]** (build right after MVP if time allo
 | G2 | Medication reminder log | STRETCH |
 | H1 | Know hub (education content) | MVP |
 | H2 | Know article detail view | MVP |
+| I1 | Public posting & nested discussions | MVP |
+| I2 | Social likes and saved bookmarks | MVP |
+| J1 | Global responsive premium footer | MVP |
+

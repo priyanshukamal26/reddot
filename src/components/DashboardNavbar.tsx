@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
@@ -13,12 +13,27 @@ export default function DashboardNavbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const router = useRouter();
   const { email, logout } = useAuth();
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const tabs = [
     { name: 'Tracking', path: '/dashboard' },
     { name: 'RedDot.ai', path: '/dashboard/ai' },
     { name: 'Know', path: '/dashboard/know' },
+    { name: 'RedConnect', path: '/dashboard/connect' },
   ];
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    }
+    if (isProfileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isProfileOpen]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-transparent">
@@ -54,7 +69,7 @@ export default function DashboardNavbar() {
       </div>
 
       {/* Profile */}
-      <div className="relative">
+      <div className="relative" ref={profileRef}>
         <button
           onClick={() => setIsProfileOpen(!isProfileOpen)}
           className="flex items-center justify-center w-10 h-10 rounded-full border border-white/10 hover:border-white/20 transition-colors bg-white/5"

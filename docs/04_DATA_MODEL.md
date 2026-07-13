@@ -42,6 +42,49 @@ CREATE TABLE report_analysis_events (
   processed_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   discarded_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- ── RedConnect: Mini Reddit-like Social Platform ──
+-- Unlike sensitive health data, RedConnect posts and comments are public
+-- and queryable by username.
+
+CREATE TABLE rc_posts (
+  id            TEXT PRIMARY KEY,        -- String ID generated client-side/server-side
+  user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  username      TEXT NOT NULL,
+  content       TEXT NOT NULL,
+  image_url     TEXT,                    -- Optional base64/url image reference
+  tag           TEXT NOT NULL DEFAULT 'general', -- 'query' | 'experience' | 'suggestion' | 'general'
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  like_count    INTEGER NOT NULL DEFAULT 0,
+  save_count    INTEGER NOT NULL DEFAULT 0,
+  comment_count INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE rc_likes (
+  user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  post_id       TEXT NOT NULL REFERENCES rc_posts(id) ON DELETE CASCADE,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, post_id)
+);
+
+CREATE TABLE rc_saves (
+  user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  post_id       TEXT NOT NULL REFERENCES rc_posts(id) ON DELETE CASCADE,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, post_id)
+);
+
+CREATE TABLE rc_comments (
+  id            TEXT PRIMARY KEY,
+  post_id       TEXT NOT NULL REFERENCES rc_posts(id) ON DELETE CASCADE,
+  user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  username      TEXT NOT NULL,
+  content       TEXT NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 ```
 
 **Note on `encrypted_blobs` granularity:** for MVP, simplest is one row per user, overwritten on each sync (`blob_type = 'full_sync'`), rather than building incremental diff/merge logic. Re-encrypt and re-upload the full local dataset on every sync. This is fine at hackathon scale (a single user's cycle data is tiny) and avoids building conflict resolution. Don't over-engineer this for MVP.

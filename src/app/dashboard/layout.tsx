@@ -2,6 +2,7 @@
 
 import DashboardNavbar from '@/components/DashboardNavbar';
 import AuthGuard from '@/components/auth/AuthGuard';
+import Footer from '@/components/layout/Footer';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <main className="flex-grow pt-24 px-6 pb-6 relative z-10">
           {children}
         </main>
+
+        <Footer />
       </div>
     </AuthGuard>
   );

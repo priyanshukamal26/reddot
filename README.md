@@ -1,8 +1,26 @@
-# RedDot — Menstrual Cycle Tracker (Private by Design)
+# RedDot — Menstrual Cycle Tracker & Community (Private by Design)
 
-RedDot is a local-first, privacy-architecture-first menstrual health and cycle tracking application. It bridges client-side zero-knowledge security with premium visual craft, interactive canvas animations, and secure on-demand AI telemetry analysis.
+> **Absolute Privacy. Premium Aesthetics. Zero-Knowledge Intelligence.**
 
-All health telemetry logged into RedDot is encrypted in the user's browser, stored locally, and remains completely unreadable by third parties—including the host server and database.
+RedDot is an Awwwards-grade, local-first menstrual health tracker and community platform built to bridge client-side zero-knowledge cryptography with top-tier visual craft. Engineered with a striking custom dark interface, scroll-driven canvas animations, and secure on-demand AI telemetry analysis, RedDot guarantees your intimate data remains yours.
+
+All health metrics, symptoms, moods, and discussion comments logged into RedDot are encrypted in your browser, stored locally in IndexedDB, and remain completely unreadable by third parties—including the host server and database.
+
+---
+
+## 📖 Table of Contents
+1. [🔒 The Privacy Model & Security Architecture](#-the-privacy-model--security-architecture)
+2. [✨ Features & Modules](#-features--modules)
+   - [RedDot.ai Conversational Assistant](#reddotai-conversational-assistant)
+   - [RedConnect Social & Discussions Hub](#redconnect-social--discussions-hub)
+   - [Animated Phase Ring & Heatmaps](#animated-phase-ring--heatmaps)
+   - [Searchable Know Hub](#searchable-know-hub)
+3. [🎨 Design System & Micro-Animations](#-design-system--micro-animations)
+4. [🛠️ Technology Stack](#-technology-stack)
+5. [📂 Directory Layout](#-directory-layout)
+6. [🚀 Getting Started](#-getting-started)
+7. [⚡ Build & Verification](#-build--verification)
+8. [⚖️ Compliance & Compliance Notice](#-compliance--compliance-notice)
 
 ---
 
@@ -30,31 +48,51 @@ sequenceDiagram
 ```
 
 ### Cryptographic Foundations
-1. **PBKDF2 Key Derivation**: High-entropy symmetric keys are derived in-browser using PBKDF2-HMAC-SHA256, utilizing unique local salt configurations.
-2. **AES-GCM-256 Encryption**: Every data payload (cycle dates, symptoms, mood details, flow metrics) is encrypted locally using the Web Crypto API (`SubtleCrypto.encrypt()`).
-3. **Zero-Knowledge Cloud Sync**: Users can optionally turn on Cloud Backup. Synchronization only transmits the encrypted ciphertext payload. The database storage only holds encrypted strings; plaintext keys never cross the network boundary.
+1. **PBKDF2 Key Derivation**: Symmetric keys are derived locally in-browser using `PBKDF2-HMAC-SHA256` from the user's password, utilizing unique local salts.
+2. **AES-GCM-256 Encryption**: Every data payload (cycle dates, symptoms, mood details, flow metrics, past chat histories) is encrypted locally using the Web Crypto API (`SubtleCrypto.encrypt()`) before being written to IndexedDB.
+3. **Zero-Knowledge Cloud Sync**: Synchronization is entirely optional. When turned on, only the encrypted ciphertext payload and IV (Initialization Vector) are transmitted. The database only holds encrypted strings; plaintext keys never cross the network.
 4. **Session Key Isolation**: Encryption keys are cached temporarily in isolated `sessionStorage` during a logged-in session and cleared immediately upon logout or window closure.
 
 ---
 
-## ✨ Features & Design Language
+## ✨ Features & Modules
 
-RedDot adapts an Awwwards-grade visual style for an intimate daily utility.
+### RedDot.ai Conversational Assistant
+An on-demand private health assistant that reads your local, decrypted telemetry to offer personalized advice.
+* **Structured Response Layout**: The assistant responds in a highly readable cards-and-points layout, complete with markdown category headers, bold highlights, and bulleted lists rather than walls of prose.
+* **Local-First Chat History**: Past conversations are encrypted client-side using `AES-GCM-256` and saved to IndexedDB, supporting sync, resume, and chat deletion to prevent list clutter.
+* **Automatic Title Summarization**: When starting a chat, a secondary, lightweight prompt summarizes your first question into a short, descriptive 2-4 word heading.
+* **Medical Lab Report OCR Scanner**: Upload PDF or image lab reports (blood panels, hormones). Text is parsed in-memory, summarized, and instantly discarded—with a visible deletion timestamp.
 
-- **The "Void" Dark Aesthetic**: Stays consistently dark throughout the authenticated application using a deep black (`#0A0A0A`) and brand signal-red (`#E01028`) palette.
-- **The "Core Dot" Motif**: A breathing 8px indicator acts as status feedback, thinking indicators for the AI engine, custom cursor focal points, and user avatars.
-- **Animated Phase Ring**: A continuous gradient-ramp ring dynamically drawn on a canvas, sweeping from Menstrual (Signal Red) → Follicular (Muted Grey) → Ovulation (White Glow) → Luteal (Crimson Black). Progress draws in smoothly on mount via GSAP.
-- **RedDot.ai Assistant**: Conversational health logging, symptom pattern analysis, and lab report translation. Queries stream through single-use request tokens and are never persisted on the server.
-- **Searchable Know Hub**: An educational dashboard of cycle guides and resources featuring active indicators matching the user's current cycle phase.
+### RedConnect Social & Discussions Hub
+A mini Reddit-style platform designed for pseudonymous, private discussions.
+* **Global Search Bar**: Search posts and usernames in real-time from the database across Saved, Own, and Global scopes, with instant loading feedback and empty states.
+* **Tabbed Navigation & Interactivity**: Easily switch feeds, publish posts with categories (`query`, `experience`, `suggestion`, `general`), like discussions, bookmark posts, and participate in nested threaded replies.
+
+### Animated Phase Ring & Heatmaps
+* **Animated Phase Ring**: A continuous gradient-ramp ring dynamically drawn on a canvas using GSAP, sweeping from Menstrual (Signal Red) → Follicular (Muted Grey) → Ovulation (White Glow) → Luteal (Crimson Black).
+* **GitHub-Style Contribution Heatmap**: A contribution calendar where each cell represents a logged day. Color intensity maps to flow and symptom severity over time.
+
+### Searchable Know Hub
+An educational database of articles and guides, complete with a search bar and active indicators matching your current cycle phase.
+
+---
+
+## 🎨 Design System & Micro-Animations
+
+RedDot uses a high-fidelity visual palette tailored for smooth interaction:
+* **The "Void" Dark Theme**: Dark-mode primary layout (`#0A0A0A` background) paired with brand signal-red (`#E51D38`).
+* **The "Core Dot" Motif**: A breathing status dot representing system status, loading states, custom cursor focal points, and user avatars.
+* **Smooth Scrolling**: Lenis integration for comfortable page navigation.
 
 ---
 
 ## 🛠️ Technology Stack
 
-* **Frontend Framework**: Next.js 15+ (App Router, Turbopack, React Server Components)
-* **Styling**: Tailwind CSS v4, Vanilla CSS variables, and PostCSS integrations
-* **Motion & Custom Controls**: GSAP (GreenSock Animation Platform) and Lenis (Smooth Scroll)
-* **Storage Layer**: IndexedDB (Local DB) with a PostgreSQL (Neon) remote ciphertext sync backup
+* **Frontend**: Next.js 15+ (App Router, Turbopack, React Server Components)
+* **Styling**: Tailwind CSS v4, Vanilla CSS variables, and PostCSS
+* **Motion**: GSAP (GreenSock Animation Platform) and Lenis (Smooth Scroll)
+* **Storage**: IndexedDB (Local DB) with Neon PostgreSQL (remote sync)
 * **AI Processing**: Groq Llama-3-70B API
 * **Cryptography**: Web Crypto API (SubtleCrypto)
 
@@ -88,8 +126,8 @@ RedDot adapts an Awwwards-grade visual style for an intimate daily utility.
 ## 🚀 Getting Started
 
 ### 1. Prerequisites
-- **Node.js**: `v18.x` or higher
-- **npm** or **yarn**
+* **Node.js**: `v18.x` or higher
+* **npm** or **yarn**
 
 ### 2. Environment Variables
 Create a `.env.local` file in the root directory:
@@ -141,6 +179,6 @@ npm run start
 
 ---
 
-## ⚖️ Non-Diagnostic Compliance Notice
+## ⚖️ Compliance & Compliance Notice
 
 RedDot.ai is strictly an informational tool. It does not provide medical advice, diagnosis, or treatment. It is not intended to replace professional medical evaluations. All encryption metrics and data storage boundaries are explicitly disclosed in our transparency guidelines.

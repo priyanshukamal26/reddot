@@ -1,155 +1,157 @@
-# RedDot — Privacy-First Menstrual Health Tracker & Community
+![NAMESPACE THIS PROJECT IS A SUBMISSION FOR HACKHAZARDS 2026](public/assets/images/hh26_main_poster.png)
 
-RedDot is a local-first, zero-knowledge menstrual health tracking and community platform. It is built to address real-world privacy concerns surrounding sensitive reproductive health telemetry by enforcing strict cryptographic boundaries. By keeping data encrypted client-side, RedDot ensures that users retain absolute sovereignty over their health logs, shielding them from third-party tracking, advertising profiling, and database breaches.
-
-Plaintext data—including cycle dates, symptoms, mood details, chat histories, and community replies—never crosses the network.
-
----
-
-## 🔒 Security Architecture & Cryptographic Verification
-
-RedDot isolates all sensitive user data inside the client-side browser sandbox. The backend infrastructure functions purely as an optional, zero-knowledge backup and synchronization system.
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User
-    participant Browser as Browser Sandbox (IndexedDB/WebCrypto)
-    participant Server as Sync Server (Next.js Node runtime)
-    participant Database as Database (Neon Postgres)
-
-    User->>Browser: Input credentials & log data
-    Note over Browser: PBKDF2 Key Derivation (Password + Local Salt)<br/>Generates AES-GCM-256 Symmetric Key
-    Browser->>Browser: Encrypt plaintext log payload via AES-GCM-256
-    Browser->>Browser: Save ciphertext to local IndexedDB
-    Note over Browser: If Cloud Sync is enabled
-    Browser->>Server: Transmit encrypted ciphertext & auth token
-    Note over Server: Server validates JWT session (payload remains encrypted)
-    Server->>Database: Write ciphertext record to table
-    Note over Database: Data stored encrypted at rest (plaintext keys never transmit)
-```
-
-### Cryptographic Details
-* **Key Derivation (PBKDF2)**: Symmetric encryption keys are derived inside the browser sandbox using PBKDF2-HMAC-SHA256 from the user's password and a unique cryptographic salt stored in local metadata.
-* **Symmetric Encryption (AES-GCM-256)**: All user inputs (daily symptoms, mood logs, journal texts, and AI chat threads) are encrypted using AES-GCM-256 via the browser's Web Crypto API (`SubtleCrypto`).
-* **Sovereign Cloud Synchronization**: Users can toggle encrypted backup. The sync process uploads only ciphertext payloads and initialization vectors (IVs). The host database never stores or has access to decryption keys.
-* **In-Memory Session Isolation**: The derived decryption key is cached only in `sessionStorage` during active sessions. It is permanently cleared upon logging out or closing the browser tab.
+# 🚀 Project Title
+**RedDot** — A local-first, zero-knowledge menstrual health tracker and community platform securing reproductive telemetry through client-side cryptography.
 
 ---
 
-## 🛠️ System Modules & Features
+# 📌 Problem & Domain
+Most popular menstrual tracking applications treat highly sensitive reproductive health logs as commercial assets. These platforms store user logs in plaintext on centralized servers, frequently sharing or selling them to advertising networks for profiling. Furthermore, in regions with restrictive health regulations, plaintext reproductive logs have transitioned from simple tracking utilities into significant legal liabilities for users.
 
-### 1. Cycle Tracking & Phase Prediction
-* **Daily Logging**: Track period dates, flow intensity, mood scales, sleep hours, exercise metrics, and physical symptom chips.
-* **Phase Estimation**: Calculates and visualizes the menstrual cycle's four distinct phases (Menstrual, Follicular, Ovulation, Luteal).
-* **Irregular-Cycle Prediction**: Automatically adjusts prediction algorithms when log variances are detected, outputting logical confidence ranges instead of false-precise dates.
-* **Symptom Heatmaps**: A chronological tracking grid showing symptom density and cycle patterns over time.
-* **Log Date Guard**: Prevents logging data for future dates to maintain database integrity.
-
-### 2. RedDot.ai — Secure AI Assistant
-* **Contextual Health Assistant**: Queries the user's recent, decrypted local logs in-memory to provide relevant, private cycle observations.
-* **Structured Information Output**: Formats recommendations and observations using structured markdown categories and bolded list points for readability.
-* **Local-First Chat History**: Past conversation threads are encrypted client-side and saved in local storage. Features include past-chat deletion and automatic title generation based on the initial question.
-* **Lab Report Analyzer**: Uploads and processes blood tests or hormone panels in-memory. The text is parsed, summarized, and instantly deleted from server memory, showing a verified deletion timestamp.
-
-### 3. RedConnect — Pseudonymous Social Hub
-* **Pseudonymous Board**: A secure forum for queries, suggestions, and health experiences.
-* **Global Search**: Instantly filters posts and usernames across Global, Saved, and Personal scopes using optimized database queries, featuring loading spinners and clean empty states.
-* **Interactivity**: Support for nested replies, likes, and saved bookmarks synced to user accounts.
-
-### 4. Know Hub
-* **Educational Library**: Medical disclaimed articles and guides organized by cycle phases, allowing users to read about physiological changes matching their current cycle status.
+### Themes Selected:
+- [ ] Human Experience & Productivity
+- [ ] Climate & Sustainability Systems
+- [x] HealthTech & Bio Platforms
+- [ ] Learning & Knowledge Systems
+- [ ] Work, Finance & Digital Economy
+- [ ] Infrastructure, Mobility & Smart Systems
+- [ ] Trust, Identity & Security
+- [ ] Media, Social & Interactive Platforms
+- [ ] Public Systems, Governance and Civic Tech
+- [ ] Developer Tools & Software Infrastructure
 
 ---
 
-## 💻 Tech Stack
+# 🎯 Objective
+What problem does your project solve, and who does it serve?
 
-* **Core Framework**: Next.js 15+ (App Router, Turbopack, React Server Components)
-* **Styling & Layout**: Tailwind CSS v4, PostCSS, and Vanilla CSS
-* **Animations**: GSAP (GreenSock) & Lenis (Smooth Scroll)
-* **Storage**: IndexedDB (local database) & Neon PostgreSQL (encrypted backup)
-* **Inference**: Groq (Llama 3.3 70B API)
-* **Encryption**: Web Crypto API (SubtleCrypto)
+* **The Target Users**: Individuals tracking their menstrual cycles, symptom histories, and hormonal panels who require high-fidelity health predictions without sacrificing their personal privacy.
+* **The Pain Point**: The monetization and legal exposure of cycle calendars, mood logs, and clinical panel details on standard tracking systems that lack cryptographic boundaries.
+* **The Value Your Solution Provides**: Enforces absolute reproductive data sovereignty. By executing PBKDF2-HMAC-SHA256 key derivation and AES-GCM-256 encryption in the browser sandbox, RedDot ensures all health telemetry remains completely unreadable to third parties—including the host server and database.
 
 ---
 
-## 📂 Project Directory Structure
+# 🧠 Team & Approach
 
-```
-├── docs/                      # Technical specifications & design references
-├── public/                    # Static assets & compiled images
-├── src/
-│   ├── app/                   # Next.js App Router pages and API routes
-│   │   ├── dashboard/         # Dashboard pages, logs, and educational resources
-│   │   ├── login/ & signup/   # Authentication forms
-│   │   ├── api/               # Serverless API routes (sync, RedConnect, AI telemetry)
-│   ├── components/            # React UI components
-│   │   ├── ai/                # Chat panels & report uploads
-│   │   ├── layout/            # Visual layout shells & global footer
-│   │   ├── nav/               # Top navbar & profile controls
-│   │   ├── tracking/          # Cycle calendar renderers & phase visualizations
-│   ├── context/               # AuthContext managing PBKDF2 key generation
-│   ├── lib/                   # Utility libraries & cryptography wrappers
-│   │   ├── crypto.ts          # Web Crypto AES-GCM and PBKDF2 helper functions
-│   │   ├── cycle.ts           # Cycle calculations & phase predictions
-│   │   ├── data.ts            # IndexedDB read/write routines
-```
+### Team Name:
+**Team RedDot**
+
+### Team Members:
+* **Priyanshu Kamal**: [GitHub Profile](https://github.com/priyanshukamal26) / [LinkedIn Profile](https://www.linkedin.com/in/priyanshukamal/) / Frontend & Cryptographic Architecture
+* **Shambhavi Nayak**: [GitHub Profile](https://github.com/Sham28-learner) / [LinkedIn Profile](https://www.linkedin.com/in/shambhavi-nayak/) / Backend & AI Telemetry
+
+### Your Approach:
+* **Why we chose this problem**: Reproductive health telemetry is among the most intimate forms of personal data. Restoring absolute user autonomy by shifting from policy-based promises to client-side cryptographic constraints is a crucial step in defending health privacy.
+* **Key challenges addressed**:
+  1. **Consistent Cryptographic Serialization**: Seamlessly encrypting and decrypting complex object trees (cycles, daily logs, and chat histories) to and from local IndexedDB without blocking the browser thread.
+  2. **Stateless AI Telemetry**: Designing an AI assistant (RedDot.ai) that queries decrypted local data in-memory without storing logs on the host server.
+  3. **Stacking Context Isolation**: Correcting CSS layout properties to ensure high-security overlay modals (like daily logging and comment drawers) stack on top of global layout elements.
+* **Breakthroughs**: Completing an onboarding flow that generates a matching `DailyEntry` alongside the `Cycle` record, ensuring local database calculations remain fully consistent and preventing auto-deletion of onboarding data.
 
 ---
 
-## 🚀 Installation & Local Deployment
+# 🛠️ Tech Stack
 
-### 1. Prerequisites
+### Core Technologies Used:
+* **Frontend**: Next.js 15+ (App Router, Turbopack, React Server Components)
+* **Backend**: Serverless API routes (Next.js Node runtime)
+* **Database**: Neon serverless PostgreSQL (for encrypted sync backup)
+* **APIs**: Groq API (Llama-3.3-70B model)
+* **Hosting / Client DB**: Local IndexedDB wrapper (primary client-side database)
+
+### Additional Technologies Selected:
+- [ ] AI / ML
+- [ ] Web3 / Blockchain
+- [x] Cyber Security
+- [x] Cloud
+- [ ] Developer Tools & Software Infrastructure
+
+---
+
+# 🏆 Sponsored Track (Optional)
+*Participating Tracks*:
+
+- [ ] Expo Track – Built using Expo
+- [ ] Neo4j Track – Uses AuraDB as primary database
+- [ ] Base44 Track – Prototype/Final Product built using Base44
+
+---
+
+# ✨ Key Features
+
+### 1. Client-Side Cryptographic Boundaries
+All daily logs, symptom selections, mood entries, and past AI chat histories are encrypted using **AES-GCM-256** and **PBKDF2-HMAC-SHA256** inside the browser sandbox before being committed to IndexedDB or Neon.
+
+### 2. RedDot.ai Assistant & Lab Report Analyzer
+An on-demand private health assistant that reads your local, decrypted telemetry to offer structured insights. Features a private PDF/image lab report analyzer that extracts data in-memory and immediately deletes files, displaying a verified timestamp of deletion.
+
+### 3. RedConnect pseudonymous Social Hub
+A secure, integrated social forum for pseudonymous health discussions. Includes a global search bar, likes, bookmarks, and nested threaded replies.
+
+### 4. Irregular-Cycle Predictions
+Automatically adjusts prediction algorithms when log variances are detected, outputting logical confidence ranges instead of false-precise dates.
+
+---
+
+# 📽️ Demo & Deliverables
+* **Demo Video Link (Mandatory)**: `[Insert Demo Link Here]`
+* **Deployment Link (Recommended)**: `http://localhost:3000`
+* **Pitch Deck / PPT (Optional)**: `[Insert PPT Link Here]`
+
+---
+
+# ✅ Tasks & Bonus Checklist
+- [x] All team members completed the mandatory social task
+- [x] Bonus Task 1 – Badge sharing
+- [x] Bonus Task 2 – Blog/article
+
+---
+
+# 🧪 How to Run the Project
+
+### Requirements:
 * **Node.js**: `v18.x` or higher
 * **npm** or **yarn**
+* **Groq API Key** (for RedDot.ai features)
+* **Neon PostgreSQL Connection String** (Optional - defaults to local IndexedDB sandbox if empty)
 
-### 2. Environment Setup
+### Environment Setup:
 Create a `.env.local` file in the root directory:
-
 ```env
-# PostgreSQL Connection (Optional - defaults to client-side IndexedDB sandbox if empty)
 DATABASE_URL="postgresql://user:pass@host:port/dbname?sslmode=require"
-
-# NextAuth Configuration
 NEXTAUTH_SECRET="your-32-byte-hex-string"
 NEXTAUTH_URL="http://localhost:3000"
-
-# Groq API Key
 GROQ_API_KEY="gsk_..."
 ```
 
-### 3. Install Dependencies
-```bash
-npm install
-```
-
-### 4. Run Development Server
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) to view the application locally.
-
-### 5. Seed Test Data
-1. Sign up or log into a test account.
-2. Go to **Settings** or click the profile dropdown menu.
-3. Select **Generate 90-Day Demo History** to populate dummy logs directly into your browser's IndexedDB.
+### Local Setup:
+1. Clone the repository and install dependencies:
+   ```bash
+   npm install
+   ```
+2. Build the production package and launch the server:
+   ```bash
+   npm run build
+   npm run start
+   ```
+3. Open `http://localhost:3000` to access the application. Go to **Settings** and click **Generate 90-Day Demo History** to seed logs.
 
 ---
 
-## ⚡ Production Verification
-
-To build and compile the application for deployment:
-
-```bash
-# Compile and optimize for production
-npm run build
-
-# Start production server
-npm run start
-```
+# 🧬 Future Scope
+* **Sovereign Partner Share Links**: Secure, revocable read-only summary sharing using unique key exchanges.
+* **Offline-First Cryptographic Queue**: Full offline caching of logs with automatic sync on reconnection.
+* **Clinical Care Prompt Alerts**: Symptom patterns (e.g. heavy flow) automatically trigger care prompts.
 
 ---
 
-## ⚖️ Non-Diagnostic Compliance Notice
+# 📎 Resources / Credits
+* **Web Cryptography API**: Supported by modern browser runtimes for AES-GCM and PBKDF2.
+* **Groq Llama-3.3**: Used for stateless inference.
+* **Neon Serverless Postgres**: Encrypted remote relational database.
+* **Next.js & React**: Core application components.
 
-RedDot and RedDot.ai are strictly informational resources. They do not provide diagnostic advice, medical treatments, or prescriptive care. Users must never substitute RedDot.ai outputs for professional medical evaluations. All encryption structures and data handling policies are outlined transparently in our security documentation.
+---
+
+# 🏁 Final Words
+Building RedDot during HackHazards '26 challenged us to rethink privacy from the browser sandbox up. Overcoming challenges with asynchronous client-side database synchronization and ensuring absolute confidentiality taught us that secure architectures are highly compatible with beautiful user experiences. Special thanks to the judges and team members!

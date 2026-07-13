@@ -33,14 +33,13 @@ What problem does your project solve, and who does it serve?
 
 # 🧠 Team & Approach
 
-### Team Name:
-**Team RedDot**
+### Team Name: **Supernova**
 
 ### Team Members:
-* **Priyanshu Kamal**: [GitHub Profile](https://github.com/priyanshukamal26) / [LinkedIn Profile](https://www.linkedin.com/in/priyanshukamal/) / Frontend & Cryptographic Architecture
-* **Shambhavi Nayak**: [GitHub Profile](https://github.com/Sham28-learner) / [LinkedIn Profile](https://www.linkedin.com/in/shambhavi-nayak/) / Backend & AI Telemetry
+* **Priyanshu Kamal**: [GitHub Profile](https://github.com/priyanshukamal26) / [LinkedIn Profile](https://www.linkedin.com/in/priyanshukamal/) / FullStack Developer
+* **Shambhavi Nayak**: [GitHub Profile](https://github.com/Sham28-learner) / [LinkedIn Profile](https://www.linkedin.com/in/shambhavi-nayak/) / FullStack Developer
 
-### Your Approach:
+### Our Approach:
 * **Why we chose this problem**: Reproductive health telemetry is among the most intimate forms of personal data. Restoring absolute user autonomy by shifting from policy-based promises to client-side cryptographic constraints is a crucial step in defending health privacy.
 * **Key challenges addressed**:
   1. **Consistent Cryptographic Serialization**: Seamlessly encrypting and decrypting complex object trees (cycles, daily logs, and chat histories) to and from local IndexedDB without blocking the browser thread.
@@ -60,20 +59,11 @@ What problem does your project solve, and who does it serve?
 * **Hosting / Client DB**: Local IndexedDB wrapper (primary client-side database)
 
 ### Additional Technologies Selected:
-- [ ] AI / ML
+- [x] AI / ML
 - [ ] Web3 / Blockchain
-- [x] Cyber Security
-- [x] Cloud
+- [ ] Cyber Security
+- [ ] Cloud
 - [ ] Developer Tools & Software Infrastructure
-
----
-
-# 🏆 Sponsored Track (Optional)
-*Participating Tracks*:
-
-- [ ] Expo Track – Built using Expo
-- [ ] Neo4j Track – Uses AuraDB as primary database
-- [ ] Base44 Track – Prototype/Final Product built using Base44
 
 ---
 
@@ -94,9 +84,9 @@ Automatically adjusts prediction algorithms when log variances are detected, out
 ---
 
 # 📽️ Demo & Deliverables
-* **Demo Video Link (Mandatory)**: `[Insert Demo Link Here]`
-* **Deployment Link (Recommended)**: `http://localhost:3000`
-* **Pitch Deck / PPT (Optional)**: `[Insert PPT Link Here]`
+* **Demo Video Link**: `https://drive.google.com/drive/folders/1-yFzY_ziEZwBkSSFRS0eBZFHKH6VUuHr?usp=sharing`
+* **Deployment Link**: `https://reddot-xi.vercel.app/`
+* **Pitch Deck / PPT**: `https://drive.google.com/drive/folders/18ynmyxPb38t5rQUPK1DysQJsYQkmBLi0?usp=sharing`
 
 ---
 
